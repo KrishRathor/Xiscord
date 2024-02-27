@@ -24,7 +24,7 @@ export const trpc = createTRPCNext<AppRouter>({
           // You can pass any HTTP headers you wish here
           async headers() {
             return {
-              authorization: `Bearer hi`,
+              authorization: `Bearer ${localStorage.getItem('token')}`,
             };
           },
         }),

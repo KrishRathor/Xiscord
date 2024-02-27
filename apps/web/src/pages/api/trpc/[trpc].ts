@@ -1,28 +1,27 @@
 import { createNextApiHandler } from '@trpc/server/adapters/next';
 import { appRouter } from '../../../server';
 import jwt from "jsonwebtoken";
-export const SECRET = 'SECr3t';
+export const secret = 'Se3rEt';
 
 function createContext(opts: any) {
     let authHeader = opts.req.headers["authorization"];
 
-    // if (authHeader) {
-    //     const token = authHeader.split(' ')[1];
-    //     console.log(token);
-    //     return new Promise<{userId?: string}>((resolve) => {
-    //         jwt.verify(token, SECRET, (err: any, user: any) => {
-    //             if (user) {
-    //                 resolve({userId: user.userId as string});
-    //             } else {
-    //                 resolve({});
-    //             }
-    //         });
-    //     })
-    // }
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
 
-    return {
-        userId: authHeader
+        return new Promise((resolve) => {
+          jwt.verify(token, secret, (err: any, user: any) => {
+              if (user) {
+                  resolve({userId: user.email as string});
+              } else {
+                  resolve({});
+              }
+          });
+      })
+
     }
+
+    return {};
 }
 
 export default createNextApiHandler({
