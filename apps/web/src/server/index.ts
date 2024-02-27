@@ -3,11 +3,13 @@ import { router } from './trpc';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
 import cors from "cors";
 import { userRouter } from './routers/userRouter';
+import { emailRouter } from './routers/emailRouter';
 export const secret = 'Se3rEt';
 
 // using trpc
 export const appRouter = router({
-    user: userRouter
+    user: userRouter,
+    email: emailRouter
 });
 
 export type AppRouter = typeof appRouter;
