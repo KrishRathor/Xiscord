@@ -137,5 +137,65 @@ export const userRouter = router({
         .use(isLoggedIn)
         .mutation(async opts => {
             
+        }),
+    forgetPassword: publicProcedure
+        .input(z.object({
+            email: z.string(),
+        }))
+        .mutation(async opts => {
+            const { email } = opts.input;
+
+            const user = await prisma.user.findFirst({
+                where: {
+                    email: email
+                }
+            });
+
+            if (!user) {
+                return {
+                    code: HttpStatusCode.NotFound,
+                    message: 'Email not registered',
+                    user: user
+                }
+            }
+
+            return {
+                code: HttpStatusCode.OK,
+                message: 'User found',
+                user: user
+            }
+
+        }),
+    resetPassword: publicProcedure
+        .input(z.object({
+            email: z.string(),
+            newPassword: z.string()
+        }))
+        .mutation(async opts => {
+            const { email, newPassword } = opts.input;
+
+            const hashedPassword = await hashPassword(newPassword)
+
+            try {
+                const user = await prisma.user.update({
+                    where: {
+                        email: email
+                    },
+                    data: {
+                        password: hashedPassword
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'Password Reset',
+                    user: user
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
         })
 })

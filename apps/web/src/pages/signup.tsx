@@ -2,8 +2,6 @@ import { emailCode } from "@/atoms/emailCode";
 import { trpc } from "@/utils/trpc";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { useRecoilState } from "recoil";
 
 const Signup: React.FC = () => {
@@ -23,7 +21,6 @@ const Signup: React.FC = () => {
     const signup = trpc.user.signup.useMutation({
         onSuccess: async data => {
             console.log(data);
-            toast(data?.message);
             if (data?.code !== 201) {
                 console.log(data?.message);
             } else {
@@ -188,7 +185,6 @@ const Signup: React.FC = () => {
         </div>
       </div>
     </div>
-    <ToastContainer />
     </div>
   );
 };
