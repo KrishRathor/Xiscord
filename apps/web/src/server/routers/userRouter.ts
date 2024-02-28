@@ -136,6 +136,6 @@ export const userRouter = router({
     me: publicProcedure
         .use(isLoggedIn)
         .mutation(async opts => {
-            return {};
+            
         })
 })
