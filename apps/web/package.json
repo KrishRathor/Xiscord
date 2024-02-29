@@ -9,6 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.11",
+    "@mui/material": "^5.15.11",
     "@prisma/client": "5.10.2",
     "@tanstack/react-query": "^5.24.1",
     "@trpc/client": "^11.0.0-next-beta.294",
@@ -22,6 +26,7 @@
     "nodemailer": "^6.9.10",
     "react": "^18",
     "react-dom": "^18",
+    "react-instantsearch": "^7.6.0",
     "react-toastify": "^10.0.4",
     "recoil": "^0.7.7",
     "zod": "^3.22.4"

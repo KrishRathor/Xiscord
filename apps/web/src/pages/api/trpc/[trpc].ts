@@ -8,6 +8,7 @@ function createContext(opts: any) {
 
     if (authHeader) {
         const token = authHeader.split(' ')[1];
+        console.log('[trpc]');
 
         return new Promise((resolve) => {
           jwt.verify(token, secret, (err: any, user: any) => {

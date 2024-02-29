@@ -118,7 +118,7 @@ export const userRouter = router({
                     user: null,
                     token: null
                 }
-                const token = jwt.sign(payload, 'secret');
+                const token = jwt.sign(payload, secret);
                 return {
                     code: HttpStatusCode.Accepted,
                     message: 'User and password matched',
@@ -134,7 +134,6 @@ export const userRouter = router({
 
         }),
     me: publicProcedure
-        .use(isLoggedIn)
         .mutation(async opts => {
             
         }),
@@ -197,5 +196,41 @@ export const userRouter = router({
             } finally {
                 await prisma.$disconnect();
             }
+        }),
+    getUserByEmail: publicProcedure
+        .input(z.object({
+            userEmail: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { userEmail } = opts.input;
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userEmail
+                    }
+                })
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: "User Not Found",
+                        user: user
+                    }
+                }
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'User Found',
+                    user: {
+                        email: user.email,
+                        id: user.id,
+                        username: user.username
+                    }
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
+
         })
 })
