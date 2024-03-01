@@ -23,6 +23,8 @@ model User {
   image         String?
   thisUser Friend[] @relation("UserFriends1")
   friends Friend[] @relation("UserFriends2")
+  messageFrom Message[] @relation("FromUser")
+  messageTo Message[] @relation("ToUser")
 }
 
 model Friend {
@@ -31,4 +33,13 @@ model Friend {
   friend    User     @relation("UserFriends2", fields: [friendId], references: [username])
   userId    String
   friendId  String
- }
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+  content String
+  from User @relation("FromUser", fields: [fromUsername], references: [username])
+  fromUsername String
+  to User @relation("ToUser", fields: [toUsername], references: [username])
+  toUsername String
+}

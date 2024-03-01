@@ -1,5 +1,5 @@
 import { ChatMessageProps } from "@/enums";
-import { useState } from "react";
+import React, { useState } from "react";
 
 export const ChatBox: React.FC = () => {
   const messages = [
@@ -177,7 +177,7 @@ export const ChatBox: React.FC = () => {
   );
 };
 
-const MessageBox = () => {
+const MessageBox: React.FC = () => {
   return (
     <div>
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
