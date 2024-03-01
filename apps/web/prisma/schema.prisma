@@ -27,8 +27,8 @@ model User {
 
 model Friend {
   id        Int      @id @default(autoincrement())
-  user      User     @relation("UserFriends1", fields: [userId], references: [email])
-  friend    User     @relation("UserFriends2", fields: [friendId], references: [email])
+  user      User     @relation("UserFriends1", fields: [userId], references: [username])
+  friend    User     @relation("UserFriends2", fields: [friendId], references: [username])
   userId    String
   friendId  String
  }
