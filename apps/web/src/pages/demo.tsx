@@ -1,6 +1,6 @@
 const Demo = () => {
   return (
-    <p>hi</p>
+    <div>hi</div>
   );
 };
 

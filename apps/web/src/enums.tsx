@@ -11,4 +11,11 @@ export interface UserType {
     emailVerified: boolean;
     password: string;
     image: string | null;
-  }
+}
+
+export interface ChatMessageProps {
+    message: string,
+    isCurrentUser: boolean,
+    username: string,
+    image?: string
+}
