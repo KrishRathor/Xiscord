@@ -37,6 +37,7 @@ model Friend {
 
 model Message {
   id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
   content String
   from User @relation("FromUser", fields: [fromUsername], references: [username])
   fromUsername String
