@@ -1,9 +1,12 @@
+import { selectedChat } from "@/atoms/selectedChat";
 import { UserType } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import { useState, useEffect } from "react";
+import { useRecoilState } from "recoil";
 
 export const SideUsers: React.FC = () => {
   const [chatUser, setChatUser] = useState<UserType[]>([]);
+  const [currentChat, setCurrentChat] = useRecoilState(selectedChat);
 
   const getFriends = trpc.friends.getAllFriends.useMutation({
     onSuccess: (data) => {
@@ -27,7 +30,7 @@ export const SideUsers: React.FC = () => {
     <div style={{ background: "#2B2D31" }} className="h-screen w-1/6 ">
       {chatUser.length > 0
         ? chatUser.map((user, index) => (
-            <div key={index}>
+            <div key={index} onClick={() => console.log(user)} >
               <User username={user.username} image={user.image ?? undefined} />
             </div>
           ))

@@ -33,6 +33,8 @@ model Friend {
   friend    User     @relation("UserFriends2", fields: [friendId], references: [username])
   userId    String
   friendId  String
+
+  @@unique([userId, friendId])
 }
 
 model Message {

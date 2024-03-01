@@ -1,7 +1,15 @@
 import { ChatMessageProps } from "@/enums";
-import React, { useState } from "react";
+import { trpc } from "@/utils/trpc";
+import React, { useEffect, useState } from "react";
 
-export const ChatBox: React.FC = () => {
+interface ChatBoxProps {
+  email: string,
+}
+
+export const ChatBox: React.FC<ChatBoxProps> = (props) => {
+
+  const { email } = props;
+
   const messages = [
     {
       message: "Hello there!",
@@ -150,6 +158,21 @@ export const ChatBox: React.FC = () => {
   ];
 
   const [m, setM] = useState(messages);
+
+  const getConversation = trpc.chat.getAllMessages.useMutation({
+    onSuccess: data => {
+      console.log(data);
+    }
+  })
+
+  useEffect(() => {
+    const getMessages = async () => {
+      await getConversation.mutate({
+        fromEmail: email
+      })
+    }
+    getMessages();
+  }, []);
 
   return (
     <div className="w-full">

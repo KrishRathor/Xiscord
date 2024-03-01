@@ -60,11 +60,11 @@ export const chatRouter = router({
         }),
     getAllMessages: publicProcedure
         .input(z.object({
-            fromUsername: z.string(),
+            fromEmail: z.string(),
         }))
         .use(isLoggedIn)
         .mutation(async opts => {
-            const { fromUsername } = opts.input;
+            const { fromEmail } = opts.input;
             const { userId } = opts.ctx;
 
             try {
@@ -83,16 +83,24 @@ export const chatRouter = router({
                     }
                 });
 
-                if (!user) {
+                console.log('from', fromEmail); 
+                const from = await prisma.user.findFirst({
+                    where: {
+                        email: fromEmail
+                    }
+                })
+
+                if (!user || !from) {
                     return {
                         code: HttpStatusCode.NotFound,
-                        message: 'User not found'
+                        message: 'User not found',
+                        msg: null
                     }
                 }
 
                 const msg = await prisma.message.findMany({
                     where: {
-                        fromUsername: fromUsername,
+                        fromUsername: from.username,
                         toUsername: user.username
                     }
                 })

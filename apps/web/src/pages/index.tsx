@@ -64,7 +64,7 @@ const FindFriends: React.FC = () => {
   };
 
   const handlePersonalChat = async (email: string) => {
-    router.push(`/message?email=${email}`)
+    // router.push(`/message?email=${email}`)
     await addFriends.mutate({ email });
   }
 

@@ -17,7 +17,7 @@ const Message: React.FC = () => {
   return (
     <div className="flex" style={{ background: "#313338" }}>
       <SideUsers />
-      <ChatBox />
+      <ChatBox email={query} />
     </div>
   );
 };

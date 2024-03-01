@@ -46,6 +46,28 @@ export const friendsRouter = router({
                     }
                 }
 
+                const preFriends = await prisma.friend.findFirst({
+                    where: {
+                        userId: firstUser.username,
+                        friendId: secondUser.username
+                    }
+                });
+
+                const preReverseFriends = await prisma.friend.findFirst({
+                    where: {
+                        userId: secondUser.username,
+                        friendId: firstUser.username
+                    }
+                });
+
+                if (preFriends || preReverseFriends) {
+                    return {
+                        code: HttpStatusCode.BadRequest,
+                        message: 'already exist',
+                        friend: null
+                    }
+                }
+
                 const friend = await prisma.friend.create({
                     data: {
                         userId: firstUser.username,
