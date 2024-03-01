@@ -179,6 +179,8 @@ const FindFriends: React.FC = () => {
 const Sidebar: React.FC = () => {
   const setSelectedOption = useSetRecoilState(homeSelectedOption);
 
+  const router = useRouter();
+
   return (
     <div
       className="w-24 h-full rounded-md my-auto"
@@ -194,6 +196,7 @@ const Sidebar: React.FC = () => {
       <div
         onClick={() => {
           setSelectedOption((_prev) => SelectedOptionHome.DirectMessage);
+          router.push('/message')
         }}
       >
         <MessageIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />

@@ -30,7 +30,9 @@ export const SideUsers: React.FC = () => {
     <div style={{ background: "#2B2D31" }} className="h-screen w-1/6 ">
       {chatUser.length > 0
         ? chatUser.map((user, index) => (
-            <div key={index} onClick={() => console.log(user)} >
+            <div key={index} onClick={() => {
+              setCurrentChat(_prev => JSON.stringify(user));
+            }} className="cursor-pointer" >
               <User username={user.username} image={user.image ?? undefined} />
             </div>
           ))

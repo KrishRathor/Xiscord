@@ -1,14 +1,16 @@
-import { ChatMessageProps } from "@/enums";
+import { selectedChat } from "@/atoms/selectedChat";
+import { ChatMessageProps, UserType } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import React, { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
 
 interface ChatBoxProps {
-  email: string,
+  email: string;
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
-
-  const { email } = props;
+  const currentChat = useRecoilValue(selectedChat);
+  const [chat, setChat] = useState<UserType>();
 
   const messages = [
     {
@@ -157,39 +159,56 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
     },
   ];
 
-  const [m, setM] = useState(messages);
+  const [msg, setMsg] = useState([]);
 
   const getConversation = trpc.chat.getAllMessages.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log(data);
-    }
-  })
+      if (data?.code === 200) {
+        const filteredMsg = data.msg?.sort((a, b) => {
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        });
+        setMsg(_prev => filteredMsg);
+      }
+    },
+  });
 
   useEffect(() => {
     const getMessages = async () => {
-      await getConversation.mutate({
-        fromEmail: email
-      })
-    }
+      const chat: UserType = currentChat ? JSON.parse(currentChat) : null;
+      setChat((_prev) => chat);
+      chat.email &&
+        (await getConversation.mutate({
+          fromEmail: chat.email,
+        }));
+    };
     getMessages();
-  }, []);
+  }, [currentChat]);
+
+  if (!chat) {
+    return <div></div>;
+  }
 
   return (
     <div className="w-full">
-      <div style={{ background: "#1E1F22" }} className="h-[9vh] flex align-middle items-center justify-start">
+      <div
+        style={{ background: "#1E1F22" }}
+        className="h-[9vh] flex align-middle items-center justify-start"
+      >
         <span className=" ml-2 text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-          K
+          {chat?.username[0]}
         </span>
-        <p className="text-xl ml-2">Kushal</p>
+        <p className="text-xl ml-2">{chat?.username}</p>
       </div>
 
       <div className="flex flex-col space-y-4 p-3 overflow-y-auto w-full h-[82vh]">
-        {messages.map((msg) => (
+        {messages.map((msg, index) => (
           <ChatMessage
             username={msg.username}
             image={msg.image}
             isCurrentUser={msg.isCurrentUser}
             message={msg.message}
+            key={index}
           />
         ))}
       </div>
@@ -201,6 +220,26 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 };
 
 const MessageBox: React.FC = () => {
+  const [message, setMessage] = useState<string>("");
+  const currentChat = useRecoilValue(selectedChat);
+
+  const sendMessage = trpc.chat.sendMessage.useMutation({
+    onSuccess: (data) => {
+      console.log('me', data);
+    },
+  });
+
+  const handleSendMessage = async () => {
+    setMessage(_prev => "");
+    const chat: UserType = JSON.parse(currentChat);
+    console.log(chat);
+    chat.username &&
+      (await sendMessage.mutate({
+        content: message,
+        to: chat.username,
+      }));
+  };
+
   return (
     <div>
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
@@ -209,6 +248,7 @@ const MessageBox: React.FC = () => {
             type="text"
             placeholder="Write your message!"
             className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
+            onChange={(e) => setMessage((_prev) => e.target.value)}
           />
           <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
             <button
@@ -223,9 +263,9 @@ const MessageBox: React.FC = () => {
                 className="h-6 w-6 text-gray-600"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
                   d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
                 ></path>
               </svg>
@@ -242,9 +282,9 @@ const MessageBox: React.FC = () => {
                 className="h-6 w-6 text-gray-600"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
                   d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 ></path>
               </svg>
@@ -252,6 +292,7 @@ const MessageBox: React.FC = () => {
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
+              onClick={handleSendMessage}
             >
               <span className="font-bold">Send</span>
               <svg

@@ -37,6 +37,8 @@ export const chatRouter = router({
                     return;
                 }
 
+                console.log(user.username, to);
+
                 const msg = await prisma.message.create({
                     data: {
                         toUsername: to,
@@ -69,6 +71,8 @@ export const chatRouter = router({
 
             try {
 
+                console.log(userId, fromEmail);
+
                 if (!userId) {
                     return {
                         code: HttpStatusCode.Unauthorized,
@@ -76,14 +80,11 @@ export const chatRouter = router({
                         msg: null
                     }
                 }
-
                 const user = await prisma.user.findFirst({
                     where: {
                         email: userId
                     }
                 });
-
-                console.log('from', fromEmail); 
                 const from = await prisma.user.findFirst({
                     where: {
                         email: fromEmail
@@ -98,17 +99,27 @@ export const chatRouter = router({
                     }
                 }
 
-                const msg = await prisma.message.findMany({
+                console.log(from.username, user.username);
+
+                const msg1 = await prisma.message.findMany({
+                    where: {
+                        fromUsername: user.username,
+                        toUsername: from.username
+                    }
+                })
+                const msg2 = await prisma.message.findMany({
                     where: {
                         fromUsername: from.username,
                         toUsername: user.username
                     }
                 })
 
+                console.log(msg2);
+
                 return {
                     code: HttpStatusCode.OK,
                     message: 'conversation found',
-                    msg
+                    msg: [...msg1, ...msg2]
                 }
 
             } catch (err) {
