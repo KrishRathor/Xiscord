@@ -25,6 +25,11 @@ class SocketService {
                 console.log(`New message ${data}`);
             })
 
+            socket.on('join:room', async roomId => {
+                console.log(`New Room join Request ${roomId}`);
+                socket.join(roomId);
+            })
+
         })
     }
 

@@ -5,13 +5,15 @@ import cors from "cors";
 import { userRouter } from './routers/userRouter';
 import { emailRouter } from './routers/emailRouter';
 import { searchRouter } from './routers/searchRouter';
+import { friendsRouter } from './routers/friendsRouter';
 export const secret = 'Se3rEt';
 
 // using trpc
 export const appRouter = router({
     user: userRouter,
     email: emailRouter,
-    search: searchRouter
+    search: searchRouter,
+    friends: friendsRouter
 });
 
 export type AppRouter = typeof appRouter;

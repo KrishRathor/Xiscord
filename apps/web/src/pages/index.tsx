@@ -7,6 +7,7 @@ import { SelectedOptionHome } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import { useRouter } from "next/router";
+import { useSocket } from "@/context/SocketProvider";
 
 const Home: React.FC = () => {
   const selectedOption = useRecoilValue(homeSelectedOption);
@@ -47,6 +48,12 @@ const FindFriends: React.FC = () => {
     },
   });
 
+  const addFriends = trpc.friends.addFriend.useMutation({
+    onSuccess: (data) => {
+      console.log(data);
+    }
+  })
+
   const handleSearch = async (e: any) => {
     e.preventDefault();
     setUsers((_prev) => []);
@@ -56,8 +63,8 @@ const FindFriends: React.FC = () => {
     });
   };
 
-  const handlePersonalChat = (email: string) => {
-    router.push(`/message?user=${email}`);
+  const handlePersonalChat = async (email: string) => {
+    await addFriends.mutate({ email });
   }
 
   return (
