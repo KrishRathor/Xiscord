@@ -1,5 +1,5 @@
 import { selectedChat } from "@/atoms/selectedChat";
-import { ChatMessageProps, UserType } from "@/enums";
+import { ChatMessageProps, MessageProps, UserType } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -159,16 +159,18 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
     },
   ];
 
-  const [msg, setMsg] = useState([]);
+  const [mess, setMsg] = useState<MessageProps[]>([]);
 
   const getConversation = trpc.chat.getAllMessages.useMutation({
     onSuccess: (data) => {
       console.log(data);
       if (data?.code === 200) {
-        const filteredMsg = data.msg?.sort((a, b) => {
+        console.log(data.msg);
+        const filtered = data.msg?.sort((a, b) => {
+          //@ts-ignore
           return new Date(a.createdAt) - new Date(b.createdAt);
         });
-        setMsg(_prev => filteredMsg);
+        filtered && setMsg(_prev => filtered);
       }
     },
   });
@@ -185,10 +187,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
     getMessages();
   }, [currentChat]);
 
-  if (!chat) {
-    return <div></div>;
-  }
-
   return (
     <div className="w-full">
       <div
@@ -202,12 +200,12 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       </div>
 
       <div className="flex flex-col space-y-4 p-3 overflow-y-auto w-full h-[82vh]">
-        {messages.map((msg, index) => (
+        {mess.map((msg, index) => (
           <ChatMessage
-            username={msg.username}
-            image={msg.image}
-            isCurrentUser={msg.isCurrentUser}
-            message={msg.message}
+            username={msg.fromUsername}
+            // image={msg.image}
+            isCurrentUser={msg.toUsername === chat?.email}
+            message={msg.content}
             key={index}
           />
         ))}
@@ -225,12 +223,12 @@ const MessageBox: React.FC = () => {
 
   const sendMessage = trpc.chat.sendMessage.useMutation({
     onSuccess: (data) => {
-      console.log('me', data);
+      console.log("me", data);
     },
   });
 
   const handleSendMessage = async () => {
-    setMessage(_prev => "");
+    setMessage((_prev) => "");
     const chat: UserType = JSON.parse(currentChat);
     console.log(chat);
     chat.username &&
