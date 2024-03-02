@@ -1,5 +1,7 @@
 import { Server } from "socket.io";
 
+const users: any = {};
+
 class SocketService {
 
     private _io: Server;
@@ -19,16 +21,31 @@ class SocketService {
         const io = this.io;
 
         io.on('connect', socket => {
-            console.log(`New Socket Connected ${socket.id}`)
+            console.log(`New Socket Connected ${socket.id}`);
+            const token = socket.handshake.query.userToken;
+            if (typeof token === "string") {
+                users[token] = socket.id;
+            }
+            console.log(users);
 
-            socket.on('event:message', async (data) => {
-                console.log(`New message ${data}`);
+            socket.on('event:message', data => {
+                console.log(users, data);
+                const { msg, fromEmail, toEmail } = JSON.parse(data);
+                console.log(fromEmail, toEmail);
+                const toSocketId = users[toEmail];
+                io.to(toSocketId).emit('event:message:reply', JSON.stringify({msg, fromEmail, toEmail}));
             })
 
-            socket.on('join:room', async roomId => {
-                console.log(`New Room join Request ${roomId}`);
-                socket.join(roomId);
-            })
+            socket.on('disconnect', () => {
+                console.log('User disconnected');
+                // Remove the user from the users object
+                for (const userId in users) {
+                    if (users[userId] === socket.id) {
+                        delete users[userId];
+                        break;
+                    }
+                }
+            });
 
         })
     }

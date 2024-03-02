@@ -37,8 +37,6 @@ export const chatRouter = router({
                     return;
                 }
 
-                console.log(user.username, to);
-
                 const msg = await prisma.message.create({
                     data: {
                         toUsername: to,

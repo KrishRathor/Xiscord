@@ -1,8 +1,10 @@
 import { selectedChat } from "@/atoms/selectedChat";
+import { useSocket } from "@/context/SocketProvider";
 import { ChatMessageProps, MessageProps, UserType } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
+import jwt from "jsonwebtoken";
 
 interface ChatBoxProps {
   email: string;
@@ -11,155 +13,13 @@ interface ChatBoxProps {
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const currentChat = useRecoilValue(selectedChat);
   const [chat, setChat] = useState<UserType>();
-
-  const messages = [
-    {
-      message: "Hello there!",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Hey Krish, how are you?",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "I am doing great, thanks for asking!",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "That's good to hear!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "By the way, did you finish that project?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Not yet, but I'm almost done.",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Great! Let me know if you need any help.",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Sure thing, thanks!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Hey, do you want to grab lunch today?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Sounds good, where do you want to go?",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "How about that new Italian place downtown?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "That works for me!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Okay, let's meet there at 12:30.",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "See you then!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Hey, I'm running a bit late, can we push it to 1:00?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Okay, let's meet there at 12:30.",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "See you then!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Hey, I'm running a bit late, can we push it to 1:00?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Okay, let's meet there at 12:30.",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "See you then!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Hey, I'm running a bit late, can we push it to 1:00?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "Okay, let's meet there at 12:30.",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-    {
-      message: "See you then!",
-      isCurrentUser: false,
-      username: "Kushal",
-      image: undefined,
-    },
-    {
-      message: "Hey, I'm running a bit late, can we push it to 1:00?",
-      isCurrentUser: true,
-      username: "Krish",
-      image: undefined,
-    },
-  ];
-
   const [mess, setMsg] = useState<MessageProps[]>([]);
+
+  const { messages } = useSocket();
+
+  useEffect(() => {
+    console.log('use', messages, mess);
+  }, [messages])
 
   const getConversation = trpc.chat.getAllMessages.useMutation({
     onSuccess: (data) => {
@@ -170,7 +30,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           //@ts-ignore
           return new Date(a.createdAt) - new Date(b.createdAt);
         });
-        filtered && setMsg(_prev => filtered);
+        filtered && setMsg((_prev) => filtered);
       }
     },
   });
@@ -200,16 +60,30 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       </div>
 
       <div className="flex flex-col space-y-4 p-3 overflow-y-auto w-full h-[82vh]">
-        {mess.map((msg, index) => (
-          <ChatMessage
-            username={msg.fromUsername}
-            // image={msg.image}
-            isCurrentUser={msg.toUsername === chat?.email}
-            message={msg.content}
-            key={index}
-          />
-        ))}
+        {mess.map((msg, index) => {
+          return (
+            <ChatMessage
+              username={msg.fromUsername}
+              // image={msg.image}
+              isCurrentUser={msg.toUsername === chat?.username}
+              message={msg.content}
+              key={index}
+            />
+          );
+        })}
+        {messages.map((msg: any, index: number) => {
+          return (
+            <ChatMessage
+              username={msg.fromEmail}
+              // image={msg.image}
+              isCurrentUser={msg.toEmail === chat?.email}
+              message={msg.msg}
+              key={index}
+            />
+          );
+        })}
       </div>
+
       <div style={{ background: "#1E1F22" }} className="h-[9vh]">
         <MessageBox />
       </div>
@@ -220,19 +94,26 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 const MessageBox: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const currentChat = useRecoilValue(selectedChat);
+  const { sendMessage } = useSocket();
 
-  const sendMessage = trpc.chat.sendMessage.useMutation({
+  const sendMessageBackend = trpc.chat.sendMessage.useMutation({
     onSuccess: (data) => {
       console.log("me", data);
     },
   });
 
   const handleSendMessage = async () => {
+
     setMessage((_prev) => "");
     const chat: UserType = JSON.parse(currentChat);
-    console.log(chat);
+    //@ts-ignore
+    const token = jwt.decode(localStorage.getItem('token'))?.email
+    console.log(token);
+
+    sendMessage(message, token, chat.email);
+
     chat.username &&
-      (await sendMessage.mutate({
+      (await sendMessageBackend.mutate({
         content: message,
         to: chat.username,
       }));
@@ -247,6 +128,7 @@ const MessageBox: React.FC = () => {
             placeholder="Write your message!"
             className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
             onChange={(e) => setMessage((_prev) => e.target.value)}
+            value={message}
           />
           <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
             <button

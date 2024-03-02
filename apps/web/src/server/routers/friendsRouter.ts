@@ -129,8 +129,6 @@ export const friendsRouter = router({
                     }
                 });
 
-                console.log(friends, friends2);
-
                 const f: User[] = [];
 
                 friends.map(async friend => {
@@ -139,6 +137,7 @@ export const friendsRouter = router({
                             username: friend.friendId
                         }
                     })
+                    console.log('from loop', user);
                     user && f.push(user);
                 })
 
