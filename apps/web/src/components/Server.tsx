@@ -127,8 +127,47 @@ const ChatBox: React.FC = () => {
 const MembersList: React.FC = () => {
   return (
     <div
-      className="h-screen w-1/5"
+      className="h-screen w-1/5 overflow-y-auto"
       style={{ background: "#2B2D31", borderLeft: "2px solid #1E1F22" }}
-    ></div>
+    >
+      <div>
+        <p className="text-xl text-gray-400 ml-4 mt-2">Online Users</p>
+        <div className="flex mt-4 ml-2 items-center" >
+          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+            K
+          </span>
+          <span className="text-xl text-gray-400 ml-4" >Krish</span>
+        </div>
+        <div className="flex mt-4 ml-2 items-center" >
+          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+            D
+          </span>
+          <span className="text-xl text-gray-400 ml-4" >Deepankar</span>
+        </div>
+      </div>
+
+
+      <div>
+        <p className="text-xl text-gray-400 ml-4 mt-8">Offline Users</p>
+        <div className="flex mt-4 ml-2 items-center" >
+          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+            P
+          </span>
+          <span className="text-xl text-gray-400 ml-4" >Prabhjot</span>
+        </div>
+        <div className="flex mt-4 ml-2 items-center" >
+          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+            K
+          </span>
+          <span className="text-xl text-gray-400 ml-4" >Kushal</span>
+        </div>
+        <div className="flex mt-4 ml-2 items-center" >
+          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+            N
+          </span>
+          <span className="text-xl text-gray-400 ml-4" >Nischay</span>
+        </div>
+      </div>
+    </div>
   );
 };
