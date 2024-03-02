@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import MessageIcon from "@mui/icons-material/Message";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -9,17 +9,18 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { useRouter } from "next/router";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import { Server } from "@/components/Server";
+import { serverName } from "@/atoms/serverName";
 
 const Home: React.FC = () => {
   const selectedOption = useRecoilValue(homeSelectedOption);
-
+  const server = useRecoilValue(serverName);
   return (
     <div className="flex h-[100vh]" style={{ background: "#313338" }}>
       <Sidebar />
       {selectedOption === SelectedOptionHome.FindFriends ? (
         <FindFriends />
       ) : selectedOption === SelectedOptionHome.Server ? (
-        <Server />
+        <Server server={server} />
       ) : (
         ""
       )}
@@ -186,8 +187,28 @@ const FindFriends: React.FC = () => {
 
 const Sidebar: React.FC = () => {
   const setSelectedOption = useSetRecoilState(homeSelectedOption);
+  const setServerName = useSetRecoilState(serverName);
+  const [serverList, setServerList] = useState<string[]>([]);
 
   const router = useRouter();
+
+  const getAllServers = trpc.server.getAllServersByUser.useMutation({
+    onSuccess: (data) => {
+      console.log(data);
+      if (data?.code === 200) {
+        const servers = data.servers;
+        const names = servers?.map((server) => server.serverName);
+        names && setServerList(names);
+      }
+    },
+  });
+
+  useEffect(() => {
+    const servers = async () => {
+      await getAllServers.mutate();
+    };
+    servers();
+  }, []);
 
   return (
     <div
@@ -209,13 +230,18 @@ const Sidebar: React.FC = () => {
       >
         <MessageIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />
       </div>
-      <div
-        onClick={() => {
-          setSelectedOption((_prev) => SelectedOptionHome.Server);
-        }}
-      >
-        <WorkspacesIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />
-      </div>
+      {serverList.map((server, index) => (
+        <div
+          onClick={() => {
+            setSelectedOption((_prev) => SelectedOptionHome.Server);
+            setServerName(_prev => server);
+            console.log(server);
+          }}
+          key={index}
+        >
+          <WorkspacesIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />
+        </div>
+      ))}
     </div>
   );
 };

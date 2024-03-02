@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import TagIcon from "@mui/icons-material/Tag";
 import GroupIcon from "@mui/icons-material/Group";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -6,20 +6,77 @@ import { membersListBool } from "@/atoms/membersListBool";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import { ChatMessageProps } from "@/enums";
+import { trpc } from "@/utils/trpc";
+import { serverName } from "@/atoms/serverName";
 
-export const Server: React.FC = () => {
+interface ServerTypeProps {
+  id: number;
+  createdAt: string;
+  admin: string;
+  serverName: string;
+  users: string[];
+  textChannels: string[];
+  voiceChannels: string[];
+}
+
+interface ServerProps {
+  server: string
+}
+
+export const Server: React.FC<ServerProps> = (props) => {
   const memberList = useRecoilValue(membersListBool);
+  const [server, setServer] = useState<ServerTypeProps | undefined>();
+
+  const servername = useRecoilValue(serverName);
+
+  useEffect(() => {
+    console.log('first', servername);
+  }, [servername])
+
+  const getServer = trpc.server.getServerByServerName.useMutation({
+    onSuccess: (data) => {
+      console.log(data);
+      if (data?.code === 200) {
+        if (data.server) {
+          //@ts-ignore
+          setServer((prev) => data.server);
+        }
+      }
+    },
+  });
+
+  useEffect(() => {
+    const server = async () => {
+      await getServer.mutate({
+        serverName: servername,
+      });
+    };
+    server();
+  }, [servername]);
+
+  if (!server) {
+    return <div></div>;
+  }
 
   return (
     <div className="flex w-full">
-      <SideList />
+      <SideList
+        serverName={server.serverName}
+        textChannels={server.textChannels}
+      />
       <ChatBox />
       {memberList && <MembersList />}
     </div>
   );
 };
 
-const SideList: React.FC = () => {
+interface SideListProps {
+  serverName: string;
+  textChannels: string[];
+}
+
+const SideList: React.FC<SideListProps> = (props) => {
+  const { serverName, textChannels } = props;
   const [showTextChannels, setShowTextChannels] = useState(true);
   const [showVoiceChannels, setShowVoiceChannels] = useState(true);
 
@@ -29,7 +86,7 @@ const SideList: React.FC = () => {
       className="h-screen w-1/4"
     >
       <div>
-        <p className="text-2xl mt-4 ml-4">Best Developer By 2024</p>
+        <p className="text-2xl mt-4 mx-auto w-fit">{serverName}</p>
         <hr className="w-[80%] m-auto mt-2" />
       </div>
 
@@ -50,22 +107,12 @@ const SideList: React.FC = () => {
 
       {showTextChannels && (
         <div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">general</p>
-          </div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">discord-clone</p>
-          </div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">session-planning</p>
-          </div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">off-topic</p>
-          </div>
+          {textChannels.map((chnl, index) => (
+            <div key={index} className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
+              <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
+              <p className="text-gray-400 mt-4 ml-2">{chnl}</p>
+            </div>
+          ))}
         </div>
       )}
 
@@ -122,9 +169,7 @@ const ChatBox: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-y-auto h-[83vh]" >
-
-      </div>
+      <div className="overflow-y-auto h-[83vh]"></div>
 
       <div style={{ background: "#1E1F22" }} className="h-[9vh]">
         <MessageBox />

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { string, z } from "zod";
 import { publicProcedure, router } from "../trpc";
 import { isLoggedIn } from "../middlewares/isLoggedIn";
 import { PrismaClient } from "@prisma/client";
@@ -148,6 +148,48 @@ export const serverRouter = router({
                 console.log(err)
             } finally {
                 await prisma.$disconnect()
+            }
+
+        }),
+    getServerByServerName: publicProcedure
+        .input(z.object({
+            serverName: z.string(),
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { serverName } = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'unauthorized',
+                        server: null
+                    }
+                }
+
+                const server = await prisma.server.findFirst({
+                    where: {
+                        serverName: serverName
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'Server Found',
+                    server: server
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
             }
 
         }),
