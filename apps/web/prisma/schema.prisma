@@ -53,4 +53,21 @@ model Server {
   admin String
   serverName String @unique
   users String[]
+  textChannels String[]
+  voiceChannels String[]
+}
+
+model textChannels {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  channelName String
+  users String[]
+}
+
+model ConversationMessage {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  content String
+  fromUser String
+  channelName String
 }

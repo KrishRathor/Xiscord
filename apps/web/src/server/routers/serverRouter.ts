@@ -52,7 +52,8 @@ export const serverRouter = router({
                     data: {
                         serverName: serverName,
                         admin: user.email,
-                        users: users
+                        users: users,
+                        textChannels: ['general', 'session-planning', 'off-topic']
                     }
                 })
 
@@ -147,6 +148,48 @@ export const serverRouter = router({
                 console.log(err)
             } finally {
                 await prisma.$disconnect()
+            }
+
+        }),
+    getAllServersByUser: publicProcedure
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { userId } = opts.ctx;
+
+            try {
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'user not registered',
+                        servers: null
+                    }
+                }
+
+                const servers = await prisma.server.findMany({
+                    where: {
+                        users: {
+                            has: userId
+                        }
+                    }
+                });
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'all servers by users',
+                    servers: servers
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
             }
 
         })
