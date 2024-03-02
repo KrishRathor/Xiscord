@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import { Server } from "@/components/Server";
 import { serverName } from "@/atoms/serverName";
+import { useSocket } from "@/context/SocketProvider";
 
 const Home: React.FC = () => {
   const selectedOption = useRecoilValue(homeSelectedOption);
@@ -189,6 +190,7 @@ const Sidebar: React.FC = () => {
   const setSelectedOption = useSetRecoilState(homeSelectedOption);
   const setServerName = useSetRecoilState(serverName);
   const [serverList, setServerList] = useState<string[]>([]);
+  const { joinServerRoom } = useSocket();
 
   const router = useRouter();
 
@@ -235,7 +237,7 @@ const Sidebar: React.FC = () => {
           onClick={() => {
             setSelectedOption((_prev) => SelectedOptionHome.Server);
             setServerName(_prev => server);
-            console.log(server);
+            joinServerRoom(server);
           }}
           key={index}
         >

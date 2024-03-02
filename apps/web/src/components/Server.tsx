@@ -9,7 +9,8 @@ import { ChatMessageProps } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import { serverName } from "@/atoms/serverName";
 import { channelName } from "@/atoms/channelname";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
+import { useSocket } from "@/context/SocketProvider";
 
 interface ServerTypeProps {
   id: number;
@@ -116,7 +117,7 @@ const SideList: React.FC<SideListProps> = (props) => {
               className="flex items-center hover:bg-gray-700 hover:cursor-pointer"
               onClick={() => {
                 console.log(chnl);
-                setchannel(_prev => chnl);
+                setchannel((_prev) => chnl);
               }}
             >
               <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
@@ -167,47 +168,52 @@ const ChatBox: React.FC = () => {
   const servername = useRecoilValue(serverName);
   const [chnl, setChnl] = useState(null);
   const [messages, setMessages] = useState([]);
+  const { serverMessage } = useSocket();
 
   const getChannel = trpc.server.getChannel.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log(data);
       if (data?.code === 200) {
         //@ts-ignore
-        setChnl(_prev => data.channel);
+        setChnl((_prev) => data.channel);
       }
-    }
-  })
+    },
+  });
+
+  useEffect(() => {
+    console.log(serverMessage);
+  }, [serverMessage]);
 
   const getConversation = trpc.server.getConversation.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log(data);
       if (data?.code === 200) {
         //@ts-ignore
-        setMessages(_prev => data.conversation);
+        setMessages((_prev) => data.conversation);
       }
-    }
-  })
+    },
+  });
 
   useEffect(() => {
     const conv = async () => {
       await getConversation.mutate({
         channelName: channelname,
-        serverName: servername
-      })
-    }
+        serverName: servername,
+      });
+    };
     conv();
-  }, [channelname])
+  }, [channelname]);
 
   useEffect(() => {
     const chnl = async () => {
-      console.log('i ran');
+      console.log("i ran");
       await getChannel.mutate({
         channelName: channelname,
-        serverName: servername
-      })
-    }
-    chnl()
-  }, [channelname])
+        serverName: servername,
+      });
+    };
+    chnl();
+  }, [channelname]);
 
   return (
     <div className="h-screen w-full">
@@ -217,10 +223,12 @@ const ChatBox: React.FC = () => {
       >
         <div className="flex">
           <TagIcon className="mt-4 w-12 h-12 ml-4" />
-          <p className="mt-6 text-2xl ml-2">{
-            //@ts-ignore
-            chnl ? chnl.channelName : ''
-          }</p>
+          <p className="mt-6 text-2xl ml-2">
+            {
+              //@ts-ignore
+              chnl ? chnl.channelName : ""
+            }
+          </p>
         </div>
         <div onClick={() => setMembers((prev) => !prev)}>
           <GroupIcon className="w-10 h-10 mr-4 mt-4 cursor-pointer" />
@@ -228,18 +236,48 @@ const ChatBox: React.FC = () => {
       </div>
 
       <div className="overflow-y-auto h-[83vh]">
-        {
-          channelname ? messages.map((msg, key) => {
-            const token = localStorage.getItem('token') ?? '';
+        {channelname
+          ? messages.map((msg, key) => {
+              const token = localStorage.getItem("token") ?? "";
+              const payload = jwt.decode(token);
+              //@ts-ignore
+              const isCurrentUser = msg.fromUser === payload?.username;
+              return (
+                <div>
+                  {
+                    <ChatMessage
+                      username={msg.fromUser}
+                      message={msg.content}
+                      isCurrentUser={isCurrentUser}
+                    />
+                  }
+                </div>
+              );
+            })
+          : ""}
+        {serverMessage.map((msg: any, index: any) => {
+          if (
+            msg.serverName === servername &&
+            msg.channelName === channelname
+          ) {
+            const token = localStorage.getItem("token") ?? "";
             const payload = jwt.decode(token);
-            const isCurrentUser = msg.fromUser === payload?.username
+            //@ts-ignore
+            const isCurrentUser = msg.from === payload?.username;
             return (
               <div>
-                <ChatMessage username={msg.fromUser} message={msg.content} isCurrentUser={isCurrentUser} />
+                {
+                  //@ts-ignore
+                  <ChatMessage
+                    username={msg.from}
+                    message={msg.msg}
+                    isCurrentUser={isCurrentUser}
+                  />
+                }
               </div>
-            )
-          }) : ''
-        }
+            );
+          }
+        })}
       </div>
 
       <div style={{ background: "#1E1F22" }} className="h-[9vh]">
@@ -278,7 +316,7 @@ const MembersList: React.FC<MemberListProps> = (props) => {
       <div>
         <p className="text-xl text-gray-400 ml-4 mt-8">All Users</p>
         {props.users.map((user, index) => (
-          <div className="flex mt-4 ml-2 items-center">
+          <div key={index} className="flex mt-4 ml-2 items-center">
             <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
               {user[0]}
             </span>
@@ -294,22 +332,30 @@ const MessageBox: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const server = useRecoilValue(serverName);
   const channel = useRecoilValue(channelName);
+  const { sendMessageInServer } = useSocket();
 
   const sendMessage = trpc.server.sendMessage.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log(data);
-    }
-  })
+    },
+  });
 
   const handleSendMessage = async (e: any) => {
-    e.preventDefault()
-    setMessage(_prev => "");
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    let payload;
+    token ? (payload = jwt.decode(token)) : "";
+    // @ts-ignore
+    token
+      ? sendMessageInServer(message, server, channel, payload?.username)
+      : "";
+    setMessage((_prev) => "");
     await sendMessage.mutate({
       content: message,
       serverName: server,
-      channelName: channel
-    })
-  }
+      channelName: channel,
+    });
+  };
 
   return (
     <div>

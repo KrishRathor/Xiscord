@@ -36,6 +36,18 @@ class SocketService {
                 io.to(toSocketId).emit('event:message:reply', JSON.stringify({msg, fromEmail, toEmail}));
             })
 
+            socket.on('event:join:server', data => {
+                const { serverName } = JSON.parse(data);
+                console.log(serverName);
+                socket.join(serverName);
+            })
+
+            socket.on('event:send:message:server', data => {
+                const { serverName, channelName, msg, from } = JSON.parse(data);
+                console.log(serverName, channelName, msg, from);
+                io.to(serverName).emit('event:send:message:server:reply', data);
+            })
+
             socket.on('disconnect', () => {
                 console.log('User disconnected');
                 // Remove the user from the users object
