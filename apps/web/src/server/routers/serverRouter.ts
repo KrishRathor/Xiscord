@@ -271,4 +271,62 @@ export const serverRouter = router({
                 await prisma.$disconnect();
             }
         }),
+    getConversationForAChannel: publicProcedure
+        .input(z.object({
+            channelName: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { channelName } = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId,
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'user not registered',
+                        conversation: null
+                    }
+                }
+
+                const channel = await prisma.textChannels.findFirst({
+                    where: {
+                        channelName: channelName
+                    }
+                });
+
+                if (!channel) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'channel not fonud',
+                        conversation: null
+                    }
+                }
+
+                const conversation = await prisma.conversationMessage.findMany({
+                    where: {
+                        channelName: channelName
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'conversation found',
+                    conversation: conversation
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
+
+        })
 })
