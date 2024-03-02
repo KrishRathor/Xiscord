@@ -1,8 +1,9 @@
+import { isLoggedIn } from './../middlewares/isLoggedIn';
 import { string, z } from "zod";
 import { publicProcedure, router } from "../trpc";
-import { isLoggedIn } from "../middlewares/isLoggedIn";
 import { PrismaClient } from "@prisma/client";
 import { HttpStatusCode } from "../statusCode";
+import { channel } from 'diagnostics_channel';
 
 const prisma = new PrismaClient();
 
@@ -369,5 +370,46 @@ export const serverRouter = router({
                 await prisma.$disconnect();
             }
 
+        }),
+    getChannel: publicProcedure
+        .input(z.object({
+            name: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { name }  = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'no token',
+                        channel: null
+                    }
+                }
+
+                const channel = await prisma.textChannels.findFirst({
+                    where: {
+                        channelName: name
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'channel found',
+                    channel: channel
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
         })
 })

@@ -8,6 +8,7 @@ import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import { ChatMessageProps } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import { serverName } from "@/atoms/serverName";
+import { channelName } from "@/atoms/channelname";
 
 interface ServerTypeProps {
   id: number;
@@ -79,6 +80,7 @@ const SideList: React.FC<SideListProps> = (props) => {
   const { serverName, textChannels } = props;
   const [showTextChannels, setShowTextChannels] = useState(true);
   const [showVoiceChannels, setShowVoiceChannels] = useState(true);
+  const setchannel = useSetRecoilState(channelName);
 
   return (
     <div
@@ -110,7 +112,11 @@ const SideList: React.FC<SideListProps> = (props) => {
           {textChannels.map((chnl, index) => (
             <div
               key={index}
-              className="flex items-center hover:bg-gray-700 hover:cursor-pointer "
+              className="flex items-center hover:bg-gray-700 hover:cursor-pointer"
+              onClick={() => {
+                console.log(chnl);
+                setchannel(_prev => chnl);
+              }}
             >
               <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
               <p className="text-gray-400 mt-4 ml-2">{chnl}</p>
@@ -156,6 +162,7 @@ const SideList: React.FC<SideListProps> = (props) => {
 
 const ChatBox: React.FC = () => {
   const setMembers = useSetRecoilState(membersListBool);
+  const channelname = useRecoilValue(channelName);
 
   return (
     <div className="h-screen w-full">
