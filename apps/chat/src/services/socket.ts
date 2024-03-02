@@ -40,6 +40,7 @@ class SocketService {
                 const { serverName } = JSON.parse(data);
                 console.log(serverName);
                 socket.join(serverName);
+                socket.emit('event:online:user', users);
             })
 
             socket.on('event:send:message:server', data => {

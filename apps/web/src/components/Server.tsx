@@ -292,6 +292,12 @@ interface MemberListProps {
 }
 
 const MembersList: React.FC<MemberListProps> = (props) => {
+  const { onlineUsers } = useSocket();
+
+  useEffect(() => {
+    console.log(onlineUsers);
+  }, [onlineUsers])
+
   return (
     <div
       className="h-screen w-1/5 overflow-y-auto"
@@ -299,18 +305,16 @@ const MembersList: React.FC<MemberListProps> = (props) => {
     >
       <div>
         <p className="text-xl text-gray-400 ml-4 mt-2">Online Users</p>
-        <div className="flex mt-4 ml-2 items-center">
-          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-            K
-          </span>
-          <span className="text-xl text-gray-400 ml-4">Krish</span>
-        </div>
-        <div className="flex mt-4 ml-2 items-center">
-          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-            D
-          </span>
-          <span className="text-xl text-gray-400 ml-4">Deepankar</span>
-        </div>
+        {onlineUsers.length > 0 && onlineUsers.map((user, index) => {
+          return (
+            <div className="flex mt-4 ml-2 items-center">
+              <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+                {user[0]}
+              </span>
+              <span className="text-xl text-gray-400 ml-4">{user}</span>
+            </div>
+          );
+        })}
       </div>
 
       <div>
