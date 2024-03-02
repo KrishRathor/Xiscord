@@ -46,7 +46,7 @@ export const serverRouter = router({
                     }
                 }
 
-                const users = [user.email]
+                const users = [user.username]
 
                 const createServer = await prisma.server.create({
                     data: {
@@ -117,7 +117,6 @@ export const serverRouter = router({
                 }
 
                 const userExists = server.users.filter(user => user === userId);
-                console.log(userExists)
 
                 if (userExists.length > 0) {
                     return {
@@ -127,7 +126,7 @@ export const serverRouter = router({
                     }
                 }
 
-                const users = [...server.users, userId];
+                const users = [...server.users, user.username];
 
                 const joinServer = await prisma.server.update({
                     where: {
@@ -217,7 +216,7 @@ export const serverRouter = router({
                 const servers = await prisma.server.findMany({
                     where: {
                         users: {
-                            has: userId
+                            has: user.username
                         }
                     }
                 });

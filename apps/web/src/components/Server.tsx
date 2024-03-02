@@ -20,7 +20,7 @@ interface ServerTypeProps {
 }
 
 interface ServerProps {
-  server: string
+  server: string;
 }
 
 export const Server: React.FC<ServerProps> = (props) => {
@@ -30,8 +30,8 @@ export const Server: React.FC<ServerProps> = (props) => {
   const servername = useRecoilValue(serverName);
 
   useEffect(() => {
-    console.log('first', servername);
-  }, [servername])
+    console.log("first", servername);
+  }, [servername]);
 
   const getServer = trpc.server.getServerByServerName.useMutation({
     onSuccess: (data) => {
@@ -65,7 +65,7 @@ export const Server: React.FC<ServerProps> = (props) => {
         textChannels={server.textChannels}
       />
       <ChatBox />
-      {memberList && <MembersList />}
+      {memberList && <MembersList users={server.users} />}
     </div>
   );
 };
@@ -108,7 +108,10 @@ const SideList: React.FC<SideListProps> = (props) => {
       {showTextChannels && (
         <div>
           {textChannels.map((chnl, index) => (
-            <div key={index} className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
+            <div
+              key={index}
+              className="flex items-center hover:bg-gray-700 hover:cursor-pointer "
+            >
               <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
               <p className="text-gray-400 mt-4 ml-2">{chnl}</p>
             </div>
@@ -178,7 +181,11 @@ const ChatBox: React.FC = () => {
   );
 };
 
-const MembersList: React.FC = () => {
+interface MemberListProps {
+  users: string[];
+}
+
+const MembersList: React.FC<MemberListProps> = (props) => {
   return (
     <div
       className="h-screen w-1/5 overflow-y-auto"
@@ -201,25 +208,15 @@ const MembersList: React.FC = () => {
       </div>
 
       <div>
-        <p className="text-xl text-gray-400 ml-4 mt-8">Offline Users</p>
-        <div className="flex mt-4 ml-2 items-center">
-          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-            P
-          </span>
-          <span className="text-xl text-gray-400 ml-4">Prabhjot</span>
-        </div>
-        <div className="flex mt-4 ml-2 items-center">
-          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-            K
-          </span>
-          <span className="text-xl text-gray-400 ml-4">Kushal</span>
-        </div>
-        <div className="flex mt-4 ml-2 items-center">
-          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-            N
-          </span>
-          <span className="text-xl text-gray-400 ml-4">Nischay</span>
-        </div>
+        <p className="text-xl text-gray-400 ml-4 mt-8">All Users</p>
+        {props.users.map((user, index) => (
+          <div className="flex mt-4 ml-2 items-center">
+            <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+              {user[0]}
+            </span>
+            <span className="text-xl text-gray-400 ml-4">{user}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
