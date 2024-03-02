@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TagIcon from "@mui/icons-material/Tag";
 import GroupIcon from "@mui/icons-material/Group";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { membersListBool } from "@/atoms/membersListBool";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
@@ -163,6 +163,27 @@ const SideList: React.FC<SideListProps> = (props) => {
 const ChatBox: React.FC = () => {
   const setMembers = useSetRecoilState(membersListBool);
   const channelname = useRecoilValue(channelName);
+  const [chnl, setChnl] = useState(null);
+
+  const getChannel = trpc.server.getChannel.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      if (data?.code === 200) {
+        //@ts-ignore
+        setChnl(_prev => data.channel);
+      }
+    }
+  })
+
+  useEffect(() => {
+    const chnl = async () => {
+      console.log('i ran');
+      await getChannel.mutate({
+        name: channelname
+      })
+    }
+    chnl()
+  }, [channelname])
 
   return (
     <div className="h-screen w-full">
@@ -172,7 +193,9 @@ const ChatBox: React.FC = () => {
       >
         <div className="flex">
           <TagIcon className="mt-4 w-12 h-12 ml-4" />
-          <p className="mt-6 text-2xl ml-2">discord-clone</p>
+          <p className="mt-6 text-2xl ml-2">{
+            chnl ? chnl.channelName : ''
+          }</p>
         </div>
         <div onClick={() => setMembers((prev) => !prev)}>
           <GroupIcon className="w-10 h-10 mr-4 mt-4 cursor-pointer" />

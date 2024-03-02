@@ -1,3 +1,5 @@
+import { serverName } from './../../atoms/serverName';
+import { channelName } from './../../atoms/channelname';
 import { isLoggedIn } from './../middlewares/isLoggedIn';
 import { string, z } from "zod";
 import { publicProcedure, router } from "../trpc";
@@ -55,6 +57,28 @@ export const serverRouter = router({
                         admin: user.email,
                         users: users,
                         textChannels: ['general', 'session-planning', 'off-topic']
+                    }
+                });
+
+                await prisma.textChannels.create({
+                    data: {
+                        channelName: 'general',
+                        server: serverName,
+                        users: users
+                    }
+                })
+                await prisma.textChannels.create({
+                    data: {
+                        channelName: 'session-planning',
+                        users: users,
+                        server: serverName
+                    }
+                })
+                await prisma.textChannels.create({
+                    data: {
+                        channelName: 'off-topic',
+                        users: users,
+                        server: serverName
                     }
                 })
 
@@ -297,7 +321,8 @@ export const serverRouter = router({
                 const createNewChannel = await prisma.textChannels.create({
                     data: {
                         channelName: channelName,
-                        users: server.users
+                        users: server.users,
+                        server: serverName
                     }
                 })
 
@@ -373,11 +398,12 @@ export const serverRouter = router({
         }),
     getChannel: publicProcedure
         .input(z.object({
-            name: z.string()
+            channelName: z.string(),
+            serverName: z.string()
         }))
         .use(isLoggedIn)
         .mutation(async opts => {
-            const { name }  = opts.input;
+            const { channelName, serverName }  = opts.input;
             const { userId } = opts.ctx;
 
             try {
@@ -397,7 +423,10 @@ export const serverRouter = router({
 
                 const channel = await prisma.textChannels.findFirst({
                     where: {
-                        channelName: name
+                        AND: [
+                            { channelName: channelName },
+                            { server: serverName }
+                        ]
                     }
                 })
 

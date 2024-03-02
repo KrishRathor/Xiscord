@@ -62,6 +62,7 @@ model textChannels {
   createdAt DateTime @default(now())
   channelName String
   users String[]
+  server String
 }
 
 model ConversationMessage {
