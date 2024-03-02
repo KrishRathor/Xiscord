@@ -63,6 +63,8 @@ model textChannels {
   channelName String
   users String[]
   server String
+
+   @@unique([channelName, server])
 }
 
 model ConversationMessage {

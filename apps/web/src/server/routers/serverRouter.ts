@@ -144,7 +144,7 @@ export const serverRouter = router({
                     }
                 }
 
-                const userExists = server.users.filter(user => user === userId);
+                const userExists = server.users.filter(usr => usr === user.username);
 
                 if (userExists.length > 0) {
                     return {
@@ -164,6 +164,23 @@ export const serverRouter = router({
                         users: users
                     }
                 });
+
+                const channels = server.textChannels;
+
+                channels.map(async chnl => {
+                    const joinChannel = await prisma.textChannels.update({
+                        //@ts-ignore
+                        where: {
+                            AND: [
+                                { channelName: chnl },
+                                { server: serverName }
+                            ]
+                        },
+                        data: {
+                            users: users
+                        }
+                    })
+                })
 
                 return {
                     code: HttpStatusCode.OK,
