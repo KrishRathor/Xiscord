@@ -245,11 +245,8 @@ const ChatBox: React.FC = () => {
               return (
                 <div>
                   {
-                    <ChatMessage
-                      username={msg.fromUser}
-                      message={msg.content}
-                      isCurrentUser={isCurrentUser}
-                    />
+                    //@ts-ignore
+                    <ChatMessage username={msg.fromUser} message={msg.content} isCurrentUser={isCurrentUser} />
                   }
                 </div>
               );
@@ -349,8 +346,8 @@ const MessageBox: React.FC = () => {
     const token = localStorage.getItem("token");
     let payload;
     token ? (payload = jwt.decode(token)) : "";
-    // @ts-ignore
     token
+      //@ts-ignore
       ? sendMessageInServer(message, server, channel, payload?.username)
       : "";
     setMessage((_prev) => "");
