@@ -73,4 +73,5 @@ model ConversationMessage {
   content String
   fromUser String
   channelName String
+  server String
 }

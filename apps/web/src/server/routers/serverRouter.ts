@@ -1,7 +1,7 @@
 import { serverName } from './../../atoms/serverName';
 import { channelName } from './../../atoms/channelname';
 import { isLoggedIn } from './../middlewares/isLoggedIn';
-import { string, z } from "zod";
+import { ostring, string, z } from "zod";
 import { publicProcedure, router } from "../trpc";
 import { PrismaClient } from "@prisma/client";
 import { HttpStatusCode } from "../statusCode";
@@ -460,5 +460,97 @@ export const serverRouter = router({
             } finally {
                 await prisma.$disconnect();
             }
+        }),
+    sendMessage: publicProcedure
+        .input(z.object({
+            content: z.string(),
+            serverName: z.string(),
+            channelName: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { userId } = opts.ctx;
+            const { content, serverName, channelName } = opts.input;
+
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'no token',
+                        conversation: null
+                    }
+                }
+
+                const conv = await prisma.conversationMessage.create({
+                    data: {
+                        channelName: channelName,
+                        server: serverName,
+                        fromUser: user.username,
+                        content: content
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.Created,
+                    message: 'message sent',
+                    conversation: conv
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
+        }),
+    getConversation: publicProcedure
+        .input(z.object({
+            serverName: z.string(),
+            channelName: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { userId } = opts.ctx;
+            const { serverName, channelName } = opts.input;
+
+            try {
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'no token',
+                        conversation: null
+                    }
+                }
+
+                const conversations = await prisma.conversationMessage.findMany({
+                    where: {
+                        AND: [
+                            { server: serverName },
+                            { channelName: channelName }
+                        ]
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'conversartions found',
+                    conversation: conversations
+                }
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
+
         })
 })
