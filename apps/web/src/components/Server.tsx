@@ -163,6 +163,7 @@ const SideList: React.FC<SideListProps> = (props) => {
 const ChatBox: React.FC = () => {
   const setMembers = useSetRecoilState(membersListBool);
   const channelname = useRecoilValue(channelName);
+  const servername = useRecoilValue(serverName);
   const [chnl, setChnl] = useState(null);
 
   const getChannel = trpc.server.getChannel.useMutation({
@@ -179,7 +180,8 @@ const ChatBox: React.FC = () => {
     const chnl = async () => {
       console.log('i ran');
       await getChannel.mutate({
-        name: channelname
+        channelName: channelname,
+        serverName: servername
       })
     }
     chnl()
@@ -194,6 +196,7 @@ const ChatBox: React.FC = () => {
         <div className="flex">
           <TagIcon className="mt-4 w-12 h-12 ml-4" />
           <p className="mt-6 text-2xl ml-2">{
+            //@ts-ignore
             chnl ? chnl.channelName : ''
           }</p>
         </div>

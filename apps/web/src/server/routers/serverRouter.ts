@@ -50,6 +50,7 @@ export const serverRouter = router({
                 }
 
                 const users = [user.username]
+                console.log('here');
 
                 const createServer = await prisma.server.create({
                     data: {
@@ -59,12 +60,13 @@ export const serverRouter = router({
                         textChannels: ['general', 'session-planning', 'off-topic']
                     }
                 });
+                console.log('and here');
 
                 await prisma.textChannels.create({
                     data: {
                         channelName: 'general',
-                        server: serverName,
-                        users: users
+                        users: users,
+                        server: serverName
                     }
                 })
                 await prisma.textChannels.create({
@@ -81,6 +83,7 @@ export const serverRouter = router({
                         server: serverName
                     }
                 })
+                console.log('and here also');
 
                 return {
                     code: HttpStatusCode.Created,
