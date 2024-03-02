@@ -9,6 +9,7 @@ import { ChatMessageProps } from "@/enums";
 import { trpc } from "@/utils/trpc";
 import { serverName } from "@/atoms/serverName";
 import { channelName } from "@/atoms/channelname";
+import jwt from "jsonwebtoken"
 
 interface ServerTypeProps {
   id: number;
@@ -165,6 +166,7 @@ const ChatBox: React.FC = () => {
   const channelname = useRecoilValue(channelName);
   const servername = useRecoilValue(serverName);
   const [chnl, setChnl] = useState(null);
+  const [messages, setMessages] = useState([]);
 
   const getChannel = trpc.server.getChannel.useMutation({
     onSuccess: data => {
@@ -175,6 +177,26 @@ const ChatBox: React.FC = () => {
       }
     }
   })
+
+  const getConversation = trpc.server.getConversation.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      if (data?.code === 200) {
+        //@ts-ignore
+        setMessages(_prev => data.conversation);
+      }
+    }
+  })
+
+  useEffect(() => {
+    const conv = async () => {
+      await getConversation.mutate({
+        channelName: channelname,
+        serverName: servername
+      })
+    }
+    conv();
+  }, [channelname])
 
   useEffect(() => {
     const chnl = async () => {
@@ -205,7 +227,20 @@ const ChatBox: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-y-auto h-[83vh]"></div>
+      <div className="overflow-y-auto h-[83vh]">
+        {
+          channelname ? messages.map((msg, key) => {
+            const token = localStorage.getItem('token') ?? '';
+            const payload = jwt.decode(token);
+            const isCurrentUser = msg.fromUser === payload?.username
+            return (
+              <div>
+                <ChatMessage username={msg.fromUser} message={msg.content} isCurrentUser={isCurrentUser} />
+              </div>
+            )
+          }) : ''
+        }
+      </div>
 
       <div style={{ background: "#1E1F22" }} className="h-[9vh]">
         <MessageBox />
@@ -257,6 +292,24 @@ const MembersList: React.FC<MemberListProps> = (props) => {
 
 const MessageBox: React.FC = () => {
   const [message, setMessage] = useState<string>("");
+  const server = useRecoilValue(serverName);
+  const channel = useRecoilValue(channelName);
+
+  const sendMessage = trpc.server.sendMessage.useMutation({
+    onSuccess: data => {
+      console.log(data);
+    }
+  })
+
+  const handleSendMessage = async (e: any) => {
+    e.preventDefault()
+    setMessage(_prev => "");
+    await sendMessage.mutate({
+      content: message,
+      serverName: server,
+      channelName: channel
+    })
+  }
 
   return (
     <div>
@@ -311,6 +364,7 @@ const MessageBox: React.FC = () => {
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
+              onClick={handleSendMessage}
             >
               <span className="font-bold">Send</span>
               <svg
