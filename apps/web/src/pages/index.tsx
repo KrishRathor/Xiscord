@@ -5,9 +5,10 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 import { homeSelectedOption } from "@/atoms/homeSelectedOption";
 import { SelectedOptionHome } from "@/enums";
 import { trpc } from "@/utils/trpc";
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { useRouter } from "next/router";
-import { useSocket } from "@/context/SocketProvider";
+import WorkspacesIcon from "@mui/icons-material/Workspaces";
+import { Server } from "@/components/Server";
 
 const Home: React.FC = () => {
   const selectedOption = useRecoilValue(homeSelectedOption);
@@ -15,7 +16,13 @@ const Home: React.FC = () => {
   return (
     <div className="flex h-[100vh]" style={{ background: "#313338" }}>
       <Sidebar />
-      {selectedOption === SelectedOptionHome.FindFriends ? <FindFriends /> : ""}
+      {selectedOption === SelectedOptionHome.FindFriends ? (
+        <FindFriends />
+      ) : selectedOption === SelectedOptionHome.Server ? (
+        <Server />
+      ) : (
+        ""
+      )}
     </div>
   );
 };
@@ -31,7 +38,6 @@ interface UserType {
 }
 
 const FindFriends: React.FC = () => {
-
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -51,8 +57,8 @@ const FindFriends: React.FC = () => {
   const addFriends = trpc.friends.addFriend.useMutation({
     onSuccess: (data) => {
       console.log(data);
-    }
-  })
+    },
+  });
 
   const handleSearch = async (e: any) => {
     e.preventDefault();
@@ -66,7 +72,7 @@ const FindFriends: React.FC = () => {
   const handlePersonalChat = async (email: string) => {
     // router.push(`/message?email=${email}`)
     await addFriends.mutate({ email });
-  }
+  };
 
   return (
     <div className="w-full">
@@ -146,7 +152,9 @@ const FindFriends: React.FC = () => {
                           alt={user.username[0]}
                         />
                       ) : (
-                        <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">{user.username[0]}</span>
+                        <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+                          {user.username[0]}
+                        </span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0 ms-4">
@@ -158,10 +166,10 @@ const FindFriends: React.FC = () => {
                       </p>
                     </div>
                     <div
-                     className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white"
-                     onClick={() => {
+                      className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white"
+                      onClick={() => {
                         handlePersonalChat(user.email);
-                     }}
+                      }}
                     >
                       <MailOutlineIcon className=" hover:cursor-pointer" />
                     </div>
@@ -196,10 +204,17 @@ const Sidebar: React.FC = () => {
       <div
         onClick={() => {
           setSelectedOption((_prev) => SelectedOptionHome.DirectMessage);
-          router.push('/message')
+          router.push("/message");
         }}
       >
         <MessageIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />
+      </div>
+      <div
+        onClick={() => {
+          setSelectedOption((_prev) => SelectedOptionHome.Server);
+        }}
+      >
+        <WorkspacesIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />
       </div>
     </div>
   );

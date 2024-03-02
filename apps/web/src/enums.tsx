@@ -1,6 +1,7 @@
 export enum SelectedOptionHome {
   DirectMessage = "DirectMessage",
   FindFriends = "FindFriends",
+  Server = "Server"
 }
 
 export interface UserType {
