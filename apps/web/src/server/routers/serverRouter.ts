@@ -192,6 +192,83 @@ export const serverRouter = router({
                 await prisma.$disconnect();
             }
 
-        })
-    
+        }),
+    createChannel: publicProcedure
+        .input(z.object({
+            channelName: z.string(),
+            serverName: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            // while creating a new channel add channel in textchannel model and also update channel's array in server model
+            const { channelName, serverName } = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'user not regsiterd',
+                        channel: null
+                    }
+                }
+
+                const server = await prisma.server.findFirst({
+                    where: {
+                        serverName: serverName
+                    }
+                })
+
+                if (!server) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'Server not found',
+                        channel: null
+                    }
+                }
+
+                if (server.admin !== userId) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'only admin can create channel',
+                        channel: null
+                    }
+                }
+
+                const channels = [...server.textChannels, channelName];
+                await prisma.server.update({
+                    where: {
+                        serverName: serverName
+                    },
+                    data: {
+                        textChannels: channels
+                    }
+                })
+
+                const createNewChannel = await prisma.textChannels.create({
+                    data: {
+                        channelName: channelName,
+                        users: server.users
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.Created,
+                    message: 'New Channel created',
+                    channel: createNewChannel
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
+        }),
 })
