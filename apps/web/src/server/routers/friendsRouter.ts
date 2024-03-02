@@ -131,7 +131,7 @@ export const friendsRouter = router({
 
                 const f: User[] = [];
 
-                friends.map(async friend => {
+                await friends.map(async friend => {
                     const user = await prisma.user.findFirst({
                         where: {
                             username: friend.friendId
@@ -141,7 +141,7 @@ export const friendsRouter = router({
                     user && f.push(user);
                 })
 
-                friends2.map(async friend => {
+                await friends2.map(async friend => {
                     const user = await prisma.user.findFirst({
                         where: {
                             username: friend.userId

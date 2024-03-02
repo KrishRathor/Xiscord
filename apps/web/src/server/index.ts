@@ -7,6 +7,7 @@ import { emailRouter } from './routers/emailRouter';
 import { searchRouter } from './routers/searchRouter';
 import { friendsRouter } from './routers/friendsRouter';
 import { chatRouter } from './routers/chatRouter';
+import { serverRouter } from './routers/serverRouter';
 export const secret = 'Se3rEt';
 
 // using trpc
@@ -15,7 +16,8 @@ export const appRouter = router({
     email: emailRouter,
     search: searchRouter,
     friends: friendsRouter,
-    chat: chatRouter
+    chat: chatRouter,
+    server: serverRouter
 });
 
 export type AppRouter = typeof appRouter;

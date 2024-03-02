@@ -1,0 +1,154 @@
+import { z } from "zod";
+import { publicProcedure, router } from "../trpc";
+import { isLoggedIn } from "../middlewares/isLoggedIn";
+import { PrismaClient } from "@prisma/client";
+import { HttpStatusCode } from "../statusCode";
+
+const prisma = new PrismaClient();
+
+export const serverRouter = router({
+    createServer: publicProcedure
+        .input(z.object({
+            serverName: z.string(),
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { serverName } = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'account not exist',
+                        server: null
+                    }
+                }
+
+                const server = await prisma.server.findFirst({
+                    where: {
+                        serverName: serverName
+                    }
+                })
+
+                if (server) {
+                    return {
+                        code: HttpStatusCode.BadRequest,
+                        message: 'Server already exists',
+                        server: null
+                    }
+                }
+
+                const users = [user.email]
+
+                const createServer = await prisma.server.create({
+                    data: {
+                        serverName: serverName,
+                        admin: user.email,
+                        users: users
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.Created,
+                    message: 'Created New Server',
+                    server: createServer
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect()
+            }
+        }),
+    joinServer: publicProcedure
+        .input(z.object({
+            serverName: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { serverName } = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+
+                if (!userId) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'token not found or incorrect',
+                        server: null
+                    }
+                }
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'Not Joined',
+                        server: null
+                    }
+                }
+
+                const server = await prisma.server.findFirst({
+                    where: {
+                        serverName: serverName
+                    }
+                })
+
+                if (!server) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: "Not Found",
+                        server: server
+                    }
+                }
+
+                const userExists = server.users.filter(user => user === userId);
+                console.log(userExists)
+
+                if (userExists.length > 0) {
+                    return {
+                        code: HttpStatusCode.BadRequest,
+                        message: 'Already joined',
+                        server: server
+                    }
+                }
+
+                const users = [...server.users, userId];
+
+                const joinServer = await prisma.server.update({
+                    where: {
+                        serverName: serverName
+                    },
+                    data: {
+                        users: users
+                    }
+                });
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'server joined',
+                    server: joinServer
+                }
+
+            } catch (err) {
+                console.log(err)
+            } finally {
+                await prisma.$disconnect()
+            }
+
+        })
+    
+})

@@ -25,7 +25,6 @@ model User {
   friends       Friend[]  @relation("UserFriends2")
   messageFrom   Message[] @relation("FromUser")
   messageTo     Message[] @relation("ToUser")
-  servers       Server[]
 }
 
 model Friend {
@@ -49,15 +48,9 @@ model Message {
 }
 
 model Server {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  users     User[]
-  channels  Channel[]
-}
-
-model Channel {
-  id        Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
   createdAt DateTime @default(now())
-  server    Server   @relation(fields: [serverId], references: [id])
-  serverId  Int
+  admin String
+  serverName String @unique
+  users String[]
 }
