@@ -11,10 +11,18 @@ import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import { Server } from "@/components/Server";
 import { serverName } from "@/atoms/serverName";
 import { useSocket } from "@/context/SocketProvider";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import { toast } from "react-toastify";
 
 const Home: React.FC = () => {
   const selectedOption = useRecoilValue(homeSelectedOption);
   const server = useRecoilValue(serverName);
+  const router = useRouter();
+
+  if (typeof window !== "undefined") {
+    !localStorage.getItem('token') && router.push('/login'); 
+  }
+
   return (
     <div className="flex h-[100vh]" style={{ background: "#313338" }}>
       <Sidebar />
@@ -190,6 +198,7 @@ const Sidebar: React.FC = () => {
   const setSelectedOption = useSetRecoilState(homeSelectedOption);
   const setServerName = useSetRecoilState(serverName);
   const [serverList, setServerList] = useState<string[]>([]);
+  const [showPopup, setShowPopup] = useState<boolean>(false);
   const { joinServerRoom } = useSocket();
 
   const router = useRouter();
@@ -210,7 +219,11 @@ const Sidebar: React.FC = () => {
       await getAllServers.mutate();
     };
     servers();
-  }, []);
+  }, [showPopup]);
+
+  const togglePopup = () => {
+    setShowPopup(!showPopup);
+  };
 
   return (
     <div
@@ -236,7 +249,7 @@ const Sidebar: React.FC = () => {
         <div
           onClick={() => {
             setSelectedOption((_prev) => SelectedOptionHome.Server);
-            setServerName(_prev => server);
+            setServerName((_prev) => server);
             joinServerRoom(server);
           }}
           key={index}
@@ -244,8 +257,73 @@ const Sidebar: React.FC = () => {
           <WorkspacesIcon className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80" />
         </div>
       ))}
+
+      <div>
+        <AddCircleIcon
+          onClick={() => {
+            console.log("first");
+            togglePopup();
+          }}
+          className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80"
+        />
+      </div>
+      {showPopup && <Popup onClose={togglePopup} />}
     </div>
   );
 };
 
 export default Home;
+
+const Popup = ({ onClose }: any) => {
+
+  const [serverName, setServerName] = useState<string>('');
+
+  const createServer = trpc.server.createServer.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      toast(data?.message);
+      if (data?.code === 201) {
+        onClose();
+      }
+    }
+  })
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded shadow-md">
+        <h2 className="text-lg text-black font-bold mb-4">Create Server</h2>
+        <form action="">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-black">
+              Server name
+            </label>
+            <input
+              type="text"
+              id="first_name"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="server_name"
+              required
+              onChange={e => setServerName(_prev => e.target.value)}
+            />
+          </div>
+          <button
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={async (e) => {
+              e.preventDefault();
+              console.log('i was clicked');
+              await createServer.mutate({ serverName: serverName })
+            }}
+          >
+            Create
+          </button>
+          <button
+            className="mt-4 ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};

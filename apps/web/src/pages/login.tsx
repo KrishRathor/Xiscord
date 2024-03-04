@@ -1,3 +1,4 @@
+import { useSocket } from "@/context/SocketProvider";
 import { trpc } from "@/utils/trpc";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
@@ -7,12 +8,19 @@ import 'react-toastify/dist/ReactToastify.css';
 const Login: React.FC = () => {
   const router = useRouter();
 
+  if (typeof window !== "undefined") {
+    localStorage.getItem('token') && router.push('/'); 
+  }
+
+  const { sendDataAfterLogin } = useSocket();
+
   const login = trpc.user.login.useMutation({
     onSuccess: (data) => {
       console.log(data);
       if (data?.code === 202) {
         toast("Logged in successfully!");
         data.token ? localStorage.setItem("token", data.token) : "";
+        sendDataAfterLogin();
         router.push("/");
       }
       if (data?.code === 404) {

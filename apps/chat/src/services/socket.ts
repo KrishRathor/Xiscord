@@ -49,6 +49,11 @@ class SocketService {
                 io.to(serverName).emit('event:send:message:server:reply', data);
             })
 
+            socket.on('email:after:login', data => {
+                console.log('here =>', data);
+                users[data] = socket.id;
+            })
+
             socket.on('disconnect', () => {
                 console.log('User disconnected');
                 // Remove the user from the users object

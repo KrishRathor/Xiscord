@@ -11,6 +11,9 @@ import { serverName } from "@/atoms/serverName";
 import { channelName } from "@/atoms/channelname";
 import jwt from "jsonwebtoken";
 import { useSocket } from "@/context/SocketProvider";
+import displayYoutubePreview, { fetchYoutubeMetadata, getYoutubeVideoId } from "./getVideoUrl";
+import { toast } from "react-toastify";
+import { channelPopup } from "@/atoms/channelPopup";
 
 interface ServerTypeProps {
   id: number;
@@ -29,6 +32,7 @@ interface ServerProps {
 export const Server: React.FC<ServerProps> = (props) => {
   const memberList = useRecoilValue(membersListBool);
   const [server, setServer] = useState<ServerTypeProps | undefined>();
+  const showPopup = useRecoilValue(channelPopup);
 
   const servername = useRecoilValue(serverName);
 
@@ -55,7 +59,7 @@ export const Server: React.FC<ServerProps> = (props) => {
       });
     };
     server();
-  }, [servername]);
+  }, [servername, showPopup]);
 
   if (!server) {
     return <div></div>;
@@ -83,6 +87,11 @@ const SideList: React.FC<SideListProps> = (props) => {
   const [showTextChannels, setShowTextChannels] = useState(true);
   const [showVoiceChannels, setShowVoiceChannels] = useState(true);
   const setchannel = useSetRecoilState(channelName);
+  const [showPopup, setShowPopup] = useRecoilState(channelPopup);
+
+  const togglePopup = () => {
+    setShowPopup(!showPopup);
+  };
 
   return (
     <div
@@ -106,7 +115,10 @@ const SideList: React.FC<SideListProps> = (props) => {
           )}
           <span className="text-xl text-gray-400">Text Channels</span>
         </div>
-        <div className="text-2xl mr-2">+</div>
+        <div className="text-2xl mr-2 hover:cursor-pointer" onClick={(e) => {
+          e.preventDefault();
+          togglePopup();
+        }} >+</div>
       </div>
 
       {showTextChannels && (
@@ -158,6 +170,8 @@ const SideList: React.FC<SideListProps> = (props) => {
           </div>
         </div>
       )}
+
+      {showPopup && <Popup onClose={togglePopup} serverName={serverName} />}
     </div>
   );
 };
@@ -257,10 +271,18 @@ const ChatBox: React.FC = () => {
             msg.serverName === servername &&
             msg.channelName === channelname
           ) {
+            const videoId = getYoutubeVideoId(msg.msg);
+            console.log(videoId, msg.msg);
+            let img;
+            if (videoId) {
+              console.log('came here');
+              img = `https://img.youtube.com/vi/${videoId}/0.jpg`
+            }
             const token = localStorage.getItem("token") ?? "";
             const payload = jwt.decode(token);
             //@ts-ignore
             const isCurrentUser = msg.from === payload?.username;
+
             return (
               <div>
                 {
@@ -269,6 +291,8 @@ const ChatBox: React.FC = () => {
                     username={msg.from}
                     message={msg.msg}
                     isCurrentUser={isCurrentUser}
+                    //@ts-ignore
+                    img={img}
                   />
                 }
               </div>
@@ -431,7 +455,7 @@ const MessageBox: React.FC = () => {
 };
 
 const ChatMessage: React.FC<ChatMessageProps> = (props) => {
-  const { message, isCurrentUser, username, image } = props;
+  const { message, isCurrentUser, username, image, img } = props;
 
   return (
     <div
@@ -457,6 +481,62 @@ const ChatMessage: React.FC<ChatMessageProps> = (props) => {
             {username[0]}
           </span>
         )}
+      </div>
+      { img && <img src={img} alt="" />}
+    </div>
+  );
+};
+
+const Popup = ({ onClose, serverName }: any) => {
+
+  const [channelName, setChannelName] = useState<string>('');
+
+  const createServer = trpc.server.createChannel.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      toast(data?.message);
+      if (data?.code === 201) {
+        onClose();
+      }
+    }
+  })
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded shadow-md">
+        <h2 className="text-lg text-black font-bold mb-4">Create Server</h2>
+        <form action="">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-black">
+              Channel name
+            </label>
+            <input
+              type="text"
+              id="first_name"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="server_name"
+              required
+              onChange={e => setChannelName(_prev => e.target.value)}
+            />
+          </div>
+
+          <button
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={async (e) => {
+              e.preventDefault();
+              console.log('i was clicked');
+              await createServer.mutate({ channelName: channelName, serverName: serverName })
+            }}
+          >
+            Create
+          </button>
+          <button
+            className="mt-4 ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </form>
       </div>
     </div>
   );

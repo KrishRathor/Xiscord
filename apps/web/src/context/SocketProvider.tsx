@@ -18,7 +18,7 @@ interface ISocketContext {
   ) => any;
   serverMessage: any;
   onlineUsers: string[];
-  // joinRoom: (roomId: string) => any,
+  sendDataAfterLogin: () => any
 }
 
 interface IMessages {
@@ -63,8 +63,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const sendMessageInServer: ISocketContext["sendMessageInServer"] =
     useCallback(
       (msg: string, serverName: string, channelName: string, from: string) => {
-        //@ts-ignore
-        // setServerMessage(prev => [...prev, { serverName, channelName, msg, from }])
         socket?.emit(
           "event:send:message:server",
           JSON.stringify({ serverName, channelName, msg, from })
@@ -73,6 +71,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       },
       [socket]
     );
+
+    const sendDataAfterLogin: ISocketContext["sendDataAfterLogin"] = useCallback(() => {
+      const token = localStorage.getItem("token") ?? "";
+      //@ts-ignore
+      const userToken = jwt.decode(token)?.email
+      socket?.emit('email:after:login', userToken);
+    }, [socket])
 
   const onMessageReply = useCallback((data: any) => {
     const { msg, fromEmail, toEmail } = JSON.parse(data);
@@ -121,10 +126,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         sendMessage,
         joinServerRoom,
         sendMessageInServer,
+        sendDataAfterLogin,
         messages,
         serverMessage,
         onlineUsers,
-      
     }}
     >
       {children}
