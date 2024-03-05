@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 export const friendsRouter = router({
     addFriend: publicProcedure
         .input(z.object({
-            email: z.string()
+            email: z.string(),
         }))
         .use(isLoggedIn)
         .mutation(async opts => {
@@ -17,7 +17,7 @@ export const friendsRouter = router({
             const { userId } = opts.ctx;
 
             try {
-
+                
                 if (email === userId || !userId) {
                     return {
                         code: HttpStatusCode.InternalServerError,

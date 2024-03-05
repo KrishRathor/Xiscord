@@ -1,14 +1,14 @@
 const mySecret = 'AIzaSyBRPP3cEvj_Exo1y1BHHbjvadqJ9fUCqE0';
 
 // Function to extract YouTube video ID from URL
-export function getYoutubeVideoId(url) {
+export function getYoutubeVideoId(url: string) {
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[7].length === 11) ? match[7] : false;
 }
 
 // Function to fetch YouTube video metadata
-export async function fetchYoutubeMetadata(videoId) {
+export async function fetchYoutubeMetadata(videoId: string) {
     const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${mySecret}&part=snippet`);
     const data = await response.json();
     // return data;
@@ -16,7 +16,7 @@ export async function fetchYoutubeMetadata(videoId) {
 }
 
 // Function to display thumbnail and link in chat
-async function displayYoutubePreview(url) {
+async function displayYoutubePreview(url: string) {
     const videoId = getYoutubeVideoId(url);
     if (videoId) {
         const metadata = await fetchYoutubeMetadata(videoId);

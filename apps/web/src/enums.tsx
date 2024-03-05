@@ -19,7 +19,7 @@ export interface ChatMessageProps {
   isCurrentUser: boolean;
   username: string;
   image?: string;
-  img: string
+  img?: string
 }
 
 export interface MessageProps {

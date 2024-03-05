@@ -232,5 +232,41 @@ export const userRouter = router({
                 await prisma.$disconnect();
             }
 
+        }),
+    getUserbyUsername: publicProcedure
+        .input(z.object({
+            username: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { username } = opts.input;
+
+            try {
+                
+                const user = await prisma.user.findFirst({
+                    where: {
+                        username: username
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'user not found',
+                        user: null
+                    }
+                }
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'user found',
+                    user: user
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
+            }
         })
 })

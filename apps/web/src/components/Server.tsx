@@ -11,9 +11,13 @@ import { serverName } from "@/atoms/serverName";
 import { channelName } from "@/atoms/channelname";
 import jwt from "jsonwebtoken";
 import { useSocket } from "@/context/SocketProvider";
-import displayYoutubePreview, { fetchYoutubeMetadata, getYoutubeVideoId } from "./getVideoUrl";
+import { getYoutubeVideoId } from "./getVideoUrl";
 import { toast } from "react-toastify";
 import { channelPopup } from "@/atoms/channelPopup";
+import { useRouter } from "next/router";
+import EmojiPicker from "emoji-picker-react";
+import { router } from "@/server/trpc";
+import { selectedChat } from "@/atoms/selectedChat";
 
 interface ServerTypeProps {
   id: number;
@@ -88,6 +92,10 @@ const SideList: React.FC<SideListProps> = (props) => {
   const [showVoiceChannels, setShowVoiceChannels] = useState(true);
   const setchannel = useSetRecoilState(channelName);
   const [showPopup, setShowPopup] = useRecoilState(channelPopup);
+  const router = useRouter();
+
+  const appId = process.env.APP_ID;
+  console.log(appId);
 
   const togglePopup = () => {
     setShowPopup(!showPopup);
@@ -102,7 +110,6 @@ const SideList: React.FC<SideListProps> = (props) => {
         <p className="text-2xl mt-4 mx-auto w-fit">{serverName}</p>
         <hr className="w-[80%] m-auto mt-2" />
       </div>
-
       <div className="flex mt-16 justify-between">
         <div
           className="flex cursor-pointer"
@@ -115,10 +122,15 @@ const SideList: React.FC<SideListProps> = (props) => {
           )}
           <span className="text-xl text-gray-400">Text Channels</span>
         </div>
-        <div className="text-2xl mr-2 hover:cursor-pointer" onClick={(e) => {
-          e.preventDefault();
-          togglePopup();
-        }} >+</div>
+        <div
+          className="text-2xl mr-2 hover:cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            togglePopup();
+          }}
+        >
+          +
+        </div>
       </div>
 
       {showTextChannels && (
@@ -151,22 +163,17 @@ const SideList: React.FC<SideListProps> = (props) => {
           )}
           <span className="text-xl text-gray-400">Voice Channels</span>
         </div>
-        <div className="text-2xl mr-2">+</div>
+        {/* <div className="text-2xl mr-2">+</div> */}
       </div>
 
       {showVoiceChannels && (
         <div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
+          <div
+            className="flex items-center hover:bg-gray-700 hover:cursor-pointer"
+            onClick={() => {}}
+          >
             <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
             <p className="text-gray-400 mt-4 ml-2">Lounge</p>
-          </div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">StudyRoom 1</p>
-          </div>
-          <div className="flex items-center hover:bg-gray-700 hover:cursor-pointer ">
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">Discord</p>
           </div>
         </div>
       )}
@@ -259,8 +266,14 @@ const ChatBox: React.FC = () => {
               return (
                 <div>
                   {
+                    
+                    <ChatMessage
                     //@ts-ignore
-                    <ChatMessage username={msg.fromUser} message={msg.content} isCurrentUser={isCurrentUser} />
+                      username={msg.fromUser}
+                      //@ts-ignore
+                      message={msg.content}
+                      isCurrentUser={isCurrentUser}
+                    />
                   }
                 </div>
               );
@@ -275,8 +288,8 @@ const ChatBox: React.FC = () => {
             console.log(videoId, msg.msg);
             let img;
             if (videoId) {
-              console.log('came here');
-              img = `https://img.youtube.com/vi/${videoId}/0.jpg`
+              console.log("came here");
+              img = `https://img.youtube.com/vi/${videoId}/0.jpg`;
             }
             const token = localStorage.getItem("token") ?? "";
             const payload = jwt.decode(token);
@@ -314,10 +327,34 @@ interface MemberListProps {
 
 const MembersList: React.FC<MemberListProps> = (props) => {
   const { onlineUsers } = useSocket();
+  const router = useRouter();
+  const setCurrentChat = useSetRecoilState(selectedChat);
+
+  const makeFriend = trpc.friends.addFriend.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      router.push('/message');
+    }
+  })
+
+  const getUser = trpc.user.getUserbyUsername.useMutation({
+    onSuccess: async data => {
+      console.log(data);
+      if (data?.code === 200) {
+        const email = data.user?.email;
+        setCurrentChat(JSON.stringify(data.user));
+        typeof email === "string" && await makeFriend.mutate({ email });
+      }
+    }
+  })
+
+  const handleClickInAllUsers = async (username: string) => {
+    await getUser.mutate({ username })
+  };
 
   useEffect(() => {
     console.log(onlineUsers);
-  }, [onlineUsers])
+  }, [onlineUsers]);
 
   return (
     <div
@@ -326,22 +363,27 @@ const MembersList: React.FC<MemberListProps> = (props) => {
     >
       <div>
         <p className="text-xl text-gray-400 ml-4 mt-2">Online Users</p>
-        {onlineUsers.length > 0 && onlineUsers.map((user, index) => {
-          return (
-            <div className="flex mt-4 ml-2 items-center">
-              <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-                {user[0]}
-              </span>
-              <span className="text-xl text-gray-400 ml-4">{user}</span>
-            </div>
-          );
-        })}
+        {onlineUsers.length > 0 &&
+          onlineUsers.map((user, index) => {
+            return (
+              <div className="flex mt-4 ml-2 items-center">
+                <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+                  {user[0]}
+                </span>
+                <span className="text-xl text-gray-400 ml-4">{user}</span>
+              </div>
+            );
+          })}
       </div>
 
       <div>
         <p className="text-xl text-gray-400 ml-4 mt-8">All Users</p>
         {props.users.map((user, index) => (
-          <div key={index} className="flex mt-4 ml-2 items-center">
+          <div
+            key={index}
+            className="flex mt-4 ml-2 items-center hover:cursor-pointer"
+            onClick={() => handleClickInAllUsers(user)}
+          >
             <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
               {user[0]}
             </span>
@@ -358,6 +400,7 @@ const MessageBox: React.FC = () => {
   const server = useRecoilValue(serverName);
   const channel = useRecoilValue(channelName);
   const { sendMessageInServer } = useSocket();
+  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
   const sendMessage = trpc.server.sendMessage.useMutation({
     onSuccess: (data) => {
@@ -371,8 +414,8 @@ const MessageBox: React.FC = () => {
     let payload;
     token ? (payload = jwt.decode(token)) : "";
     token
-      //@ts-ignore
-      ? sendMessageInServer(message, server, channel, payload?.username)
+      ? //@ts-ignore
+        sendMessageInServer(message, server, channel, payload?.username)
       : "";
     setMessage((_prev) => "");
     await sendMessage.mutate({
@@ -385,70 +428,82 @@ const MessageBox: React.FC = () => {
   return (
     <div>
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-        <div className="relative flex">
-          <input
-            type="text"
-            placeholder="Write your message!"
-            className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
-            onChange={(e) => setMessage((_prev) => e.target.value)}
-            value={message}
-          />
-          <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="h-6 w-6 text-gray-600"
+        <form>
+          <div className="relative flex">
+            <input
+              type="text"
+              placeholder="Write your message!"
+              className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
+              onChange={(e) => setMessage((_prev) => e.target.value)}
+              value={message}
+            />
+            <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                ></path>
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="h-6 w-6 text-gray-600"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6 text-gray-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                  ></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none"
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
-              onClick={handleSendMessage}
-            >
-              <span className="font-bold">Send</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-6 w-6 ml-2 transform rotate-90"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6 text-gray-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+              </button>
+              {showEmojiPicker && (
+                <EmojiPicker
+                  onEmojiClick={(e) => {
+                    const emoji = e.emoji;
+                    setMessage((prev) => `${prev}${emoji}`);
+                  }}
+                  className="z-100 absolute bottom-60"
+                />
+              )}
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
+                onClick={handleSendMessage}
               >
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-              </svg>
-            </button>
+                <span className="font-bold">Send</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-6 w-6 ml-2 transform rotate-90"
+                >
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
@@ -482,24 +537,23 @@ const ChatMessage: React.FC<ChatMessageProps> = (props) => {
           </span>
         )}
       </div>
-      { img && <img src={img} alt="" />}
+      {img && <img src={img} alt="" />}
     </div>
   );
 };
 
 const Popup = ({ onClose, serverName }: any) => {
-
-  const [channelName, setChannelName] = useState<string>('');
+  const [channelName, setChannelName] = useState<string>("");
 
   const createServer = trpc.server.createChannel.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       console.log(data);
       toast(data?.message);
       if (data?.code === 201) {
         onClose();
       }
-    }
-  })
+    },
+  });
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -516,7 +570,7 @@ const Popup = ({ onClose, serverName }: any) => {
               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               placeholder="server_name"
               required
-              onChange={e => setChannelName(_prev => e.target.value)}
+              onChange={(e) => setChannelName((_prev) => e.target.value)}
             />
           </div>
 
@@ -524,8 +578,11 @@ const Popup = ({ onClose, serverName }: any) => {
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             onClick={async (e) => {
               e.preventDefault();
-              console.log('i was clicked');
-              await createServer.mutate({ channelName: channelName, serverName: serverName })
+              console.log("i was clicked");
+              await createServer.mutate({
+                channelName: channelName,
+                serverName: serverName,
+              });
             }}
           >
             Create
