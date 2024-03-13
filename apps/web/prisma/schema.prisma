@@ -75,3 +75,10 @@ model ConversationMessage {
   channelName String
   server String
 }
+
+model Bots {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  botName String
+  owner String
+}
