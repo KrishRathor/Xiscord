@@ -6,6 +6,11 @@ import { HttpStatusCode } from "../statusCode";
 
 const prisma = new PrismaClient();
 
+interface Ibots {
+    username: string,
+    botsName: string
+};
+
 export const botRouter = router({
     createBot: publicProcedure
         .input(z.object({
@@ -15,6 +20,7 @@ export const botRouter = router({
         .mutation(async opts => {
             const { botName } = opts.input;
             const { userId } = opts.ctx;
+            console.log('first');
 
             try {
 
@@ -33,11 +39,24 @@ export const botRouter = router({
                 })
 
                 if (!user) {
-                    // not possible
                     return {
                         code: HttpStatusCode.NotFound,
                         message: 'user not found',
                         bot: null
+                    }
+                }
+
+                const preBot = await prisma.bots.findFirst({
+                    where: {
+                        botName: botName
+                    }
+                })
+
+                if (preBot) {
+                    return {
+                        code: HttpStatusCode.BadRequest,
+                        message: 'already created',
+                        bot: preBot
                     }
                 }
 
@@ -58,6 +77,38 @@ export const botRouter = router({
                 console.error(err);
             } finally {
                 await prisma.$disconnect();
+            }
+        }),
+    getAllBots: publicProcedure
+        .mutation(async opts => {
+            try {
+
+                const bots = await prisma.bots.findMany();
+                const data: Ibots[] = [];
+
+                await Promise.all(bots.map(async item => {
+                    const user = await prisma.user.findFirst({
+                        where: {
+                            email: item.owner
+                        }
+                    });
+                    user && data.push({
+                        username: user.username,
+                        botsName: item.botName
+                    });
+                }));
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'bots found',
+                    bots: bots,
+                    data: data
+                };
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect()
             }
         })
 })
