@@ -1,3 +1,4 @@
+import { trpc } from "@/utils/trpc";
 import React, { useState } from "react";
 
 const Bots: React.FC = () => {
@@ -19,8 +20,16 @@ const Form: React.FC = () => {
 
     const [botName, setBotName] = useState<string>();
 
-    const handleCreateBot = () => {
-        console.log(botName);
+    const createBot = trpc.bots.createBot.useMutation({
+        onSuccess: data => {
+            console.log(data);
+        }
+    })
+
+    const handleCreateBot = async () => {
+        botName && await createBot.mutate({
+            botName: botName
+        })
     }
 
   return (

@@ -8,6 +8,7 @@ import { searchRouter } from './routers/searchRouter';
 import { friendsRouter } from './routers/friendsRouter';
 import { chatRouter } from './routers/chatRouter';
 import { serverRouter } from './routers/serverRouter';
+import { botRouter } from './routers/botRouter';
 export const secret = 'Se3rEt';
 
 // using trpc
@@ -17,7 +18,8 @@ export const appRouter = router({
     search: searchRouter,
     friends: friendsRouter,
     chat: chatRouter,
-    server: serverRouter
+    server: serverRouter,
+    bots: botRouter
 });
 
 export type AppRouter = typeof appRouter;
