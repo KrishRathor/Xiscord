@@ -48,37 +48,39 @@ model Message {
 }
 
 model Server {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  admin String
-  serverName String @unique
-  users String[]
-  textChannels String[]
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  admin         String
+  serverName    String   @unique
+  users         String[]
+  textChannels  String[]
   voiceChannels String[]
+  Bots          String[] @default([])
 }
 
 model textChannels {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
   channelName String
-  users String[]
-  server String
+  users       String[]
+  server      String
 
-   @@unique([channelName, server])
+  @@unique([channelName, server])
 }
 
 model ConversationMessage {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  content String
-  fromUser String
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  content     String
+  fromUser    String
   channelName String
-  server String
+  server      String
 }
 
 model Bots {
-  id Int @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  botName String
-  owner String
+  botName   String   @unique
+  owner     String
+  servers   String[] @default([])
 }

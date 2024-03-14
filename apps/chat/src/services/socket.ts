@@ -26,7 +26,6 @@ class SocketService {
             if (typeof token === "string") {
                 users[token] = socket.id;
             }
-            console.log(users);
 
             socket.on('event:message', data => {
                 console.log(users, data);
@@ -52,6 +51,20 @@ class SocketService {
             socket.on('email:after:login', data => {
                 console.log('here =>', data);
                 users[data] = socket.id;
+            })
+
+            socket.on('message:server:bot', data => {
+                const { message, serverName, botsList } = data;
+                const botName = message.split(" ")[0];
+                let botToSend = null;
+                botsList.map((bot: any) => {
+                    if (`@${bot}` === botName) {
+                        botToSend = botName
+                    }
+                })
+                if (botToSend) {
+                    // send message to machine bot somehow
+                }
             })
 
             socket.on('disconnect', () => {

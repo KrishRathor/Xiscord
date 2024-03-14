@@ -1,3 +1,4 @@
+import { serverName } from './../../atoms/serverName';
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 import { isLoggedIn } from "../middlewares/isLoggedIn";
@@ -109,6 +110,109 @@ export const botRouter = router({
                 console.log(err);
             } finally {
                 await prisma.$disconnect()
+            }
+        }),
+    addBotToServer: publicProcedure
+        .input(z.object({
+            botName: z.string(),
+            serverName: z.string()
+        }))
+        .use(isLoggedIn)
+        .mutation(async opts => {
+            const { botName, serverName } = opts.input;
+            const { userId } = opts.ctx;
+
+            try {
+                if (!userId) {
+                    return {
+                        code: HttpStatusCode.Unauthorized,
+                        message: 'unauth',
+                        botAdded: null   
+                    }
+                }
+
+                const user = await prisma.user.findFirst({
+                    where: {
+                        email: userId
+                    }
+                })
+
+                if (!user) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'user not found',
+                        botAdded: null   
+                    }
+                }
+
+                const server = await prisma.server.findFirst({
+                    where: {
+                        serverName: serverName
+                    }
+                })
+
+                if (!server) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'server not found',
+                        botAdded: null
+                    }
+                }
+
+                const Bot = await prisma.bots.findFirst({
+                    where: {
+                        botName: botName
+                    }
+                })
+
+                if (!Bot) {
+                    return {
+                        code: HttpStatusCode.NotFound,
+                        message: 'bot not found',
+                        botAdded: null
+                    }
+                }
+
+                const bots = server.Bots;
+                const ifBot = bots.find(bot => bot === botName);
+
+                if (ifBot) {
+                    return {
+                        code: HttpStatusCode.BadRequest,
+                        message: 'bot already exist',
+                        botAdded: null
+                    }
+                }
+                const botsToAdd = [...server.Bots, botName];
+                const addToServer = await prisma.server.update({
+                    where: {
+                        serverName: serverName
+                    },
+                    data: {
+                        Bots: botsToAdd
+                    }
+                })
+
+                const servers = [...Bot.servers, serverName];
+                const addToBot = await prisma.bots.update({
+                    where: {
+                        botName: botName
+                    },
+                    data: {
+                        servers: servers
+                    }
+                })
+
+                return {
+                    code: HttpStatusCode.OK,
+                    message: 'bot added',
+                    botAdded: addToBot
+                }
+
+            } catch (err) {
+                console.log(err);
+            } finally {
+                await prisma.$disconnect();
             }
         })
 })
