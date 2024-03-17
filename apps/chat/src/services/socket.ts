@@ -54,17 +54,13 @@ class SocketService {
             })
 
             socket.on('message:server:bot', data => {
-                const { message, serverName, botsList } = data;
-                const botName = message.split(" ")[0];
-                let botToSend = null;
-                botsList.map((bot: any) => {
-                    if (`@${bot}` === botName) {
-                        botToSend = botName
-                    }
-                })
-                if (botToSend) {
-                    // send message to machine bot somehow
-                }
+                const { msg, serverName, channelName } = JSON.parse(data);
+                console.log('from bot', msg, serverName, channelName);
+                io.emit('message:bot', msg);
+            })
+
+            socket.on('reply:from:bot', (data) => {
+                console.log(`recieved reply from bot`, data);
             })
 
             socket.on('disconnect', () => {

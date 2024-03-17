@@ -8,7 +8,6 @@ interface SocketProviderProps {
 
 interface ISocketContext {
   sendMessage: (msg: string, fromEmail: string, toEmail: string) => any;
-  messages: any;
   joinServerRoom: (serverName: string) => any;
   sendMessageInServer: (
     msg: string,
@@ -16,9 +15,15 @@ interface ISocketContext {
     channelName: string,
     from: string
   ) => any;
+  sendDataAfterLogin: () => any;
+  sendMessageToBot: (
+    msg: string,
+    serverName: string,
+    channelName: string
+  ) => any;
   serverMessage: any;
   onlineUsers: string[];
-  sendDataAfterLogin: () => any
+  messages: any;
 }
 
 interface IMessages {
@@ -72,12 +77,20 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       [socket]
     );
 
-    const sendDataAfterLogin: ISocketContext["sendDataAfterLogin"] = useCallback(() => {
+  const sendMessageToBot: ISocketContext["sendMessageToBot"] = useCallback((
+    msg: string, serverName: string, channelName: string
+  ) => {
+    const data = {msg, serverName, channelName}
+    socket?.emit('message:server:bot', JSON.stringify(data));
+  }, [socket])
+
+  const sendDataAfterLogin: ISocketContext["sendDataAfterLogin"] =
+    useCallback(() => {
       const token = localStorage.getItem("token") ?? "";
       //@ts-ignore
-      const userToken = jwt.decode(token)?.email
-      socket?.emit('email:after:login', userToken);
-    }, [socket])
+      const userToken = jwt.decode(token)?.email;
+      socket?.emit("email:after:login", userToken);
+    }, [socket]);
 
   const onMessageReply = useCallback((data: any) => {
     const { msg, fromEmail, toEmail } = JSON.parse(data);
@@ -127,10 +140,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         joinServerRoom,
         sendMessageInServer,
         sendDataAfterLogin,
+        sendMessageToBot,
         messages,
         serverMessage,
         onlineUsers,
-    }}
+      }}
     >
       {children}
     </SocketContext.Provider>

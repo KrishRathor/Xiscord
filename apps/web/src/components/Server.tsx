@@ -399,7 +399,7 @@ const MessageBox: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const server = useRecoilValue(serverName);
   const channel = useRecoilValue(channelName);
-  const { sendMessageInServer } = useSocket();
+  const { sendMessageInServer, sendMessageToBot } = useSocket();
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
   const sendMessage = trpc.server.sendMessage.useMutation({
@@ -417,6 +417,7 @@ const MessageBox: React.FC = () => {
       ? //@ts-ignore
         sendMessageInServer(message, server, channel, payload?.username)
       : "";
+    token ?  sendMessageToBot(message, server, channel) : "";
     setMessage((_prev) => "");
     await sendMessage.mutate({
       content: message,
