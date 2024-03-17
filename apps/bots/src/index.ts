@@ -1,12 +1,10 @@
-import http from "http";
+import Bot from "./services/bot";
 
 async function init () {
-    const httpServer = http.createServer();
-    const PORT = process.env.PORT ?? 9000;
+    
+    const bot =  new Bot();
+    bot.connect();
 
-    httpServer.listen(PORT, () => {
-        console.log(`Http Server started at port ${PORT}`);
-    })
 }
 
 init();
