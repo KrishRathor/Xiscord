@@ -109,6 +109,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     setOnlineUsers((_prev) => keys);
   }, []);
 
+  const getReplyFromBot = useCallback((data: any) => {
+    console.log('reply from bot => ', data);
+    const {msg, serverName, channelName} = JSON.parse(data);
+    //@ts-ignore
+    setServerMessage(prev => [...prev, {
+      serverName,
+      channelName,
+      msg,
+      from: 'Bot'
+    }])
+  }, [])
+
   useEffect(() => {
     const token = localStorage.getItem("token") ?? "";
     const _socket = io(`http://localhost:8000`, {
@@ -121,6 +133,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     _socket.on("event:message:reply", onMessageReply);
     _socket.on("event:send:message:server:reply", onServerMessageReply);
     _socket.on("event:online:user", getOnlineUsersList);
+    _socket.on("reply:from:bot:to:client", getReplyFromBot);
 
     setSocket((_prev) => _socket);
 
@@ -128,6 +141,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       _socket.off("event:message:reply", onMessageReply);
       _socket.off("event:send:message:server:reply", onServerMessageReply);
       _socket.off("event:online:user", getOnlineUsersList);
+      _socket.off("reply:from:bot:to:client", getReplyFromBot);
       _socket.disconnect();
       setSocket(undefined);
     };

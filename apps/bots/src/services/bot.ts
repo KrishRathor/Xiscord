@@ -1,19 +1,25 @@
 import { io, Socket } from "socket.io-client";
 
-type MessageHandler = (message: string) => void;
+type MessageHandler = (message: string, serverName: string, channelName: string) => void;
 
 class Bot {
     private socket: Socket | null;
     private messageHandler: MessageHandler | null;
+    private botName: string | null;
 
-    constructor() {
+
+    constructor(botName: string) {
         this.socket = null;
         this.messageHandler = null;
+        this.botName = botName;
     }
 
     connect(): void {
-        console.log(`I was called`);
-        this.socket = io(`http://localhost:8000`);
+        this.socket = io(`http://localhost:8000`, {
+          query: {
+            botName: this.botName
+          }
+        });
     
         this.socket.on('connect', () => {
           console.log('Connected to server.');
@@ -21,9 +27,10 @@ class Bot {
     
         this.socket.on('message:bot', (data: any) => {
           console.log('Received message:', data);
+          const { content, serverName, channelName } = JSON.parse(data);
 
           if (this.messageHandler) {
-            this.messageHandler(data);
+            this.messageHandler(content, serverName, channelName);
           }
 
         });
@@ -37,10 +44,9 @@ class Bot {
         });
       }
 
-      sendMessage(msg: string) {
+      sendMessage(msg: string, serverName: string, channelName: string) {
         if (this.socket) {
-            console.log('i was here');
-            this.socket.emit('reply:from:bot', msg);
+            this.socket.emit('reply:from:bot', JSON.stringify({msg, serverName, channelName}));
         }
       }
 
