@@ -16,7 +16,6 @@ const Login: React.FC = () => {
 
   const login = trpc.user.login.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code === 202) {
         toast("Logged in successfully!");
         data.token ? localStorage.setItem("token", data.token) : "";

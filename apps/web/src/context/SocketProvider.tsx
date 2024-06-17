@@ -59,7 +59,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   const joinServerRoom: ISocketContext["joinServerRoom"] = useCallback(
     (serverName: string) => {
-      console.log("I was called with server name: ", serverName);
       socket?.emit("event:join:server", JSON.stringify({ serverName }));
     },
     [socket]
@@ -72,7 +71,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           "event:send:message:server",
           JSON.stringify({ serverName, channelName, msg, from })
         );
-        console.log("send msg server called");
       },
       [socket]
     );
@@ -94,12 +92,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   const onMessageReply = useCallback((data: any) => {
     const { msg, fromEmail, toEmail } = JSON.parse(data);
-    console.log("recieved from backend", data);
     setMessages((prev) => [...prev, { msg, fromEmail, toEmail }]);
   }, []);
 
   const onServerMessageReply = useCallback((data: any) => {
-    console.log("from backend", data);
     //@ts-ignore
     setServerMessage((prev) => [...prev, JSON.parse(data)]);
   }, []);
@@ -110,7 +106,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, []);
 
   const getReplyFromBot = useCallback((data: any) => {
-    console.log('reply from bot => ', data);
     const {msg, serverName, channelName} = JSON.parse(data);
     //@ts-ignore
     setServerMessage(prev => [...prev, {

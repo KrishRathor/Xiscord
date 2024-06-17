@@ -19,14 +19,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const { messages } = useSocket();
 
   useEffect(() => {
-    console.log("use", messages, mess);
   }, [messages]);
 
   const getConversation = trpc.chat.getAllMessages.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code === 200) {
-        console.log(data.msg);
         const filtered = data.msg?.sort((a, b) => {
           //@ts-ignore
           return new Date(a.createdAt) - new Date(b.createdAt);
@@ -103,7 +100,6 @@ const MessageBox: React.FC = () => {
 
   const sendMessageBackend = trpc.chat.sendMessage.useMutation({
     onSuccess: (data) => {
-      console.log("me", data);
     },
   });
 
@@ -112,7 +108,6 @@ const MessageBox: React.FC = () => {
     const chat: UserType = JSON.parse(currentChat);
     //@ts-ignore
     const token = jwt.decode(localStorage.getItem("token"))?.email;
-    console.log(token);
 
     sendMessage(message, token, chat.email);
 

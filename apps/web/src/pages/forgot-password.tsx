@@ -14,13 +14,11 @@ const ForgotPassword: React.FC = () => {
   const sendMail = trpc.email.sendEmail.useMutation({
     onSuccess: data => {
       setEmailCode(_prev => data?.code);
-      console.log(data);
     }
   })
 
   const accountExist = trpc.user.forgetPassword.useMutation({
     onSuccess: async (data) => {
-      console.log(data);
       if (data.code === 404) {
         toast("Email not registered");
       } else if (data.code === 200) {
@@ -32,7 +30,6 @@ const ForgotPassword: React.FC = () => {
 
   const resetPassword = trpc.user.resetPassword.useMutation({
     onSuccess: data => {
-      console.log(data);
       if (data?.code === 200) {
         toast("Password changed successfully");
         router.push('/login');

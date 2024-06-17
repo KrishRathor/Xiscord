@@ -58,10 +58,8 @@ const FindFriends: React.FC = () => {
 
   const getAllUsers = trpc.user.getAllUsers.useMutation({
     onSuccess: data => {
-      console.log(data);
       setLoading(false);
       if (data.code === 200) {
-        console.log(data.users);
         data.users && setAllUsers(data.users);
       }
     }
@@ -281,7 +279,6 @@ const Sidebar: React.FC = () => {
 
   const getAllServers = trpc.server.getAllServersByUser.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code === 200) {
         const servers = data.servers;
         const names = servers?.map((server) => server.serverName);
@@ -337,7 +334,6 @@ const Sidebar: React.FC = () => {
       <div>
         <AddCircleIcon
           onClick={() => {
-            console.log("first");
             togglePopup();
           }}
           className="block w-12 h-12 m-auto mt-8 hover:cursor-pointer hover:opacity-80"
@@ -356,7 +352,6 @@ const Popup = ({ onClose }: any) => {
 
   const createServer = trpc.server.createServer.useMutation({
     onSuccess: data => {
-      console.log(data);
       toast(data?.message);
       if (data?.code === 201) {
         onClose();
@@ -386,7 +381,6 @@ const Popup = ({ onClose }: any) => {
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             onClick={async (e) => {
               e.preventDefault();
-              console.log('i was clicked');
               createServer.mutateAsync({ serverName: serverName })
             }}
           >

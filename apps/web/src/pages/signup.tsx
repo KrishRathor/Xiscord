@@ -14,7 +14,6 @@ const Signup: React.FC = () => {
 
   const sendEmail = trpc.email.sendEmail.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code) {
         setCode((_prev) => data?.code);
       }
@@ -23,9 +22,7 @@ const Signup: React.FC = () => {
 
   const signup = trpc.user.signup.useMutation({
     onSuccess: async (data) => {
-      console.log(data);
       if (data?.code !== 201) {
-        console.log(data?.message);
       } else {
         await sendEmail.mutate({ email: formData.email });
         router.push(`/verify-email?e=${formData.email}`);

@@ -41,12 +41,10 @@ export const Server: React.FC<ServerProps> = (props) => {
   const servername = useRecoilValue(serverName);
 
   useEffect(() => {
-    console.log("first", servername);
   }, [servername]);
 
   const getServer = trpc.server.getServerByServerName.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code === 200) {
         if (data.server) {
           //@ts-ignore
@@ -164,7 +162,6 @@ const ChatBox: React.FC = () => {
 
   const getChannel = trpc.server.getChannel.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code === 200) {
         //@ts-ignore
         setChnl((_prev) => data.channel);
@@ -173,12 +170,10 @@ const ChatBox: React.FC = () => {
   });
 
   useEffect(() => {
-    console.log(serverMessage);
   }, [serverMessage]);
 
   const getConversation = trpc.server.getConversation.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       if (data?.code === 200) {
         //@ts-ignore
         setMessages((_prev) => data.conversation);
@@ -255,10 +250,8 @@ const ChatBox: React.FC = () => {
             msg.channelName === channelname
           ) {
             const videoId = getYoutubeVideoId(msg.msg);
-            console.log(videoId, msg.msg);
             let img;
             if (videoId) {
-              console.log("came here");
               img = `https://img.youtube.com/vi/${videoId}/0.jpg`;
             }
             const token = localStorage.getItem("token") ?? "";
@@ -302,14 +295,12 @@ const MembersList: React.FC<MemberListProps> = (props) => {
 
   const makeFriend = trpc.friends.addFriend.useMutation({
     onSuccess: data => {
-      console.log(data);
       router.push('/message');
     }
   })
 
   const getUser = trpc.user.getUserbyUsername.useMutation({
     onSuccess: async data => {
-      console.log(data);
       if (data?.code === 200) {
         const email = data.user?.email;
         setCurrentChat(JSON.stringify(data.user));
@@ -321,10 +312,6 @@ const MembersList: React.FC<MemberListProps> = (props) => {
   const handleClickInAllUsers = async (username: string) => {
     getUser.mutateAsync({ username })
   };
-
-  useEffect(() => {
-    console.log(onlineUsers);
-  }, [onlineUsers]);
 
   const [users, setAllUsers] = useState<any>([]);
 
@@ -338,7 +325,6 @@ const MembersList: React.FC<MemberListProps> = (props) => {
 
   const add = trpc.server.addMemberToServer.useMutation({
     onSuccess: data => {
-      console.log(data);
     }
   })
 
@@ -424,7 +410,6 @@ const MessageBox: React.FC = () => {
 
   const sendMessage = trpc.server.sendMessage.useMutation({
     onSuccess: (data) => {
-      console.log(data);
     },
   });
 
@@ -549,7 +534,6 @@ const Popup = ({ onClose, serverName }: any) => {
 
   const createServer = trpc.server.createChannel.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       toast(data?.message);
       if (data?.code === 201) {
         onClose();
@@ -580,7 +564,6 @@ const Popup = ({ onClose, serverName }: any) => {
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             onClick={async (e) => {
               e.preventDefault();
-              console.log("i was clicked");
               createServer.mutateAsync({
                 channelName: channelName,
                 serverName: serverName,

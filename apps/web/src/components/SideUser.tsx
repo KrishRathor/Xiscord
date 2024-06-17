@@ -11,10 +11,8 @@ export const SideUsers: React.FC = () => {
   const getFriends = trpc.friends.getAllFriends.useMutation({
     onSuccess: (data) => {
       if (data?.code === 200) {
-        console.log(data);
         data.friends && setChatUser(data.friends);
       } else {
-        console.log(data?.message);
       }
     },
   });

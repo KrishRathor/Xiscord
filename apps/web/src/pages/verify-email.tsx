@@ -27,7 +27,6 @@ const VerifyEmail: React.FC = () => {
 
   const verify = trpc.email.verifyEmail.useMutation({
     onSuccess: (data) => {
-      console.log(data);
       toast("Email Verified");
       router.push("/login");
     },
@@ -41,7 +40,6 @@ const VerifyEmail: React.FC = () => {
     if (code === JSON.stringify(codeFromBackend)) {
       const email = router.query.e;
       email && typeof email === "string" ? setEmail(email) : "";
-      console.log(email);
       if (email && typeof email === "string") {
         await verify.mutate({
           email: email,

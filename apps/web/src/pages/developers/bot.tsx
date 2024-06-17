@@ -39,7 +39,6 @@ const MarketPlace: React.FC = () => {
 
   const getBots = trpc.bots.getAllBots.useMutation({
     onSuccess: (data) => {
-      console.log(data);
 
       if (data?.code === 200) {
         const bots = data.data;
@@ -82,7 +81,6 @@ const BotCard: React.FC<BotCardProps> = (props) => {
       if (data?.code === 200) {
         const server = data.servers;
         server && setServers((_prev) => server);
-        console.log(server);
       }
     },
   });
@@ -138,7 +136,6 @@ const Form: React.FC = () => {
 
   const createBot = trpc.bots.createBot.useMutation({
     onSuccess: (data) => {
-      console.log(data);
     },
   });
 
