@@ -5,6 +5,7 @@ import { publicProcedure, router } from "../trpc";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from 'bcryptjs';
 import { isLoggedIn } from '../middlewares/isLoggedIn';
+import { finished } from 'stream';
 
 const secret = 'Se3rEt';
 
@@ -268,5 +269,28 @@ export const userRouter = router({
             } finally {
                 await prisma.$disconnect();
             }
-        })
+        }),
+  getAllUsers: publicProcedure
+    .mutation(async opts => {
+        try {
+      
+      const users = await prisma.user.findMany();
+
+      return {
+        code: HttpStatusCode.OK,
+        message: 'users found',
+        users
+      }
+
+    } catch (error) {
+      console.log(error);
+      return {
+        code: HttpStatusCode.InternalServerError,
+        message: "InternalServerError",
+        users: null
+      }
+    } finally {
+      await prisma.$disconnect();
+    }
+  })
 })

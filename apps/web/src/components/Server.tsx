@@ -58,7 +58,7 @@ export const Server: React.FC<ServerProps> = (props) => {
 
   useEffect(() => {
     const server = async () => {
-      await getServer.mutate({
+      getServer.mutateAsync({
         serverName: servername,
       });
     };
@@ -95,7 +95,6 @@ const SideList: React.FC<SideListProps> = (props) => {
   const router = useRouter();
 
   const appId = process.env.APP_ID;
-  console.log(appId);
 
   const togglePopup = () => {
     setShowPopup(!showPopup);
@@ -140,7 +139,6 @@ const SideList: React.FC<SideListProps> = (props) => {
               key={index}
               className="flex items-center hover:bg-gray-700 hover:cursor-pointer"
               onClick={() => {
-                console.log(chnl);
                 setchannel((_prev) => chnl);
               }}
             >
@@ -148,33 +146,6 @@ const SideList: React.FC<SideListProps> = (props) => {
               <p className="text-gray-400 mt-4 ml-2">{chnl}</p>
             </div>
           ))}
-        </div>
-      )}
-
-      <div className="flex mt-16 justify-between">
-        <div
-          className="flex cursor-pointer"
-          onClick={() => setShowVoiceChannels((prev) => !prev)}
-        >
-          {showVoiceChannels ? (
-            <ArrowDropDownIcon className="mt-[2px]" />
-          ) : (
-            <ArrowRightIcon className="mt-[2px]" />
-          )}
-          <span className="text-xl text-gray-400">Voice Channels</span>
-        </div>
-        {/* <div className="text-2xl mr-2">+</div> */}
-      </div>
-
-      {showVoiceChannels && (
-        <div>
-          <div
-            className="flex items-center hover:bg-gray-700 hover:cursor-pointer"
-            onClick={() => {}}
-          >
-            <span className="text-gray-400 text-3xl mt-4 ml-4">#</span>
-            <p className="text-gray-400 mt-4 ml-2">Lounge</p>
-          </div>
         </div>
       )}
 
@@ -217,7 +188,7 @@ const ChatBox: React.FC = () => {
 
   useEffect(() => {
     const conv = async () => {
-      await getConversation.mutate({
+      getConversation.mutateAsync({
         channelName: channelname,
         serverName: servername,
       });
@@ -227,8 +198,7 @@ const ChatBox: React.FC = () => {
 
   useEffect(() => {
     const chnl = async () => {
-      console.log("i ran");
-      await getChannel.mutate({
+      getChannel.mutateAsync({
         channelName: channelname,
         serverName: servername,
       });
@@ -259,25 +229,25 @@ const ChatBox: React.FC = () => {
       <div className="overflow-y-auto h-[83vh]">
         {channelname
           ? messages.map((msg, key) => {
-              const token = localStorage.getItem("token") ?? "";
-              const payload = jwt.decode(token);
-              //@ts-ignore
-              const isCurrentUser = msg.fromUser === payload?.username;
-              return (
-                <div>
-                  {
-                    
-                    <ChatMessage
+            const token = localStorage.getItem("token") ?? "";
+            const payload = jwt.decode(token);
+            //@ts-ignore
+            const isCurrentUser = msg.fromUser === payload?.username;
+            return (
+              <div>
+                {
+
+                  <ChatMessage
                     //@ts-ignore
-                      username={msg.fromUser}
-                      //@ts-ignore
-                      message={msg.content}
-                      isCurrentUser={isCurrentUser}
-                    />
-                  }
-                </div>
-              );
-            })
+                    username={msg.fromUser}
+                    //@ts-ignore
+                    message={msg.content}
+                    isCurrentUser={isCurrentUser}
+                  />
+                }
+              </div>
+            );
+          })
           : ""}
         {serverMessage.map((msg: any, index: any) => {
           if (
@@ -349,12 +319,44 @@ const MembersList: React.FC<MemberListProps> = (props) => {
   })
 
   const handleClickInAllUsers = async (username: string) => {
-    await getUser.mutate({ username })
+    getUser.mutateAsync({ username })
   };
 
   useEffect(() => {
     console.log(onlineUsers);
   }, [onlineUsers]);
+
+  const [users, setAllUsers] = useState<any>([]);
+
+  const getUsers = trpc.user.getAllUsers.useMutation({
+    onSuccess: data => {
+      if (data.code === 200) {
+        data.users && setAllUsers(data.users);
+      }
+    }
+  })
+
+  const add = trpc.server.addMemberToServer.useMutation({
+    onSuccess: data => {
+      console.log(data);
+    }
+  })
+
+  const handleAddMember = () => {
+    getUsers.mutateAsync();
+  }
+
+  const server = useRecoilValue(serverName);
+
+  const addUser = (username: any) => {
+    if (typeof username !== "string") return;
+
+    add.mutateAsync({
+      username,
+      serverName: server
+    })
+
+  }
 
   return (
     <div
@@ -377,7 +379,24 @@ const MembersList: React.FC<MemberListProps> = (props) => {
       </div>
 
       <div>
-        <p className="text-xl text-gray-400 ml-4 mt-8">All Users</p>
+        <div className="flex justify-between items-center " >
+          <p className="text-xl text-gray-400 ml-4 mt-8">All Users</p>
+          <p className="text-2xl mr-2 mt-8 cursor-pointer" onClick={handleAddMember} >+</p>
+        </div>
+
+        <div>
+          {
+            users.map((user: any, id: any) => {
+              return (
+                <div className="flex justify-evenly" key={id} >
+                  <p className="w-[5vw]" >{user.username}</p>
+                  <p className="cursor-pointer" onClick={() => addUser(user.username)} >Add</p>
+                </div>
+              )
+            })
+          }
+        </div>
+
         {props.users.map((user, index) => (
           <div
             key={index}
@@ -391,6 +410,7 @@ const MembersList: React.FC<MemberListProps> = (props) => {
           </div>
         ))}
       </div>
+
     </div>
   );
 };
@@ -415,11 +435,11 @@ const MessageBox: React.FC = () => {
     token ? (payload = jwt.decode(token)) : "";
     token
       ? //@ts-ignore
-        sendMessageInServer(message, server, channel, payload?.username)
+      sendMessageInServer(message, server, channel, payload?.username)
       : "";
-    token ?  sendMessageToBot(message, server, channel) : "";
+    token ? sendMessageToBot(message, server, channel) : "";
     setMessage((_prev) => "");
-    await sendMessage.mutate({
+    sendMessage.mutateAsync({
       content: message,
       serverName: server,
       channelName: channel,
@@ -439,25 +459,6 @@ const MessageBox: React.FC = () => {
               value={message}
             />
             <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="h-6 w-6 text-gray-600"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                  ></path>
-                </svg>
-              </button>
               <button
                 type="button"
                 className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none"
@@ -580,7 +581,7 @@ const Popup = ({ onClose, serverName }: any) => {
             onClick={async (e) => {
               e.preventDefault();
               console.log("i was clicked");
-              await createServer.mutate({
+              createServer.mutateAsync({
                 channelName: channelName,
                 serverName: serverName,
               });

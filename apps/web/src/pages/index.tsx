@@ -20,7 +20,7 @@ const Home: React.FC = () => {
   const router = useRouter();
 
   if (typeof window !== "undefined") {
-    !localStorage.getItem('token') && router.push('/login'); 
+    !localStorage.getItem('token') && router.push('/login');
   }
 
   return (
@@ -53,6 +53,26 @@ const FindFriends: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [users, setUsers] = useState<UserType[]>([]);
   const [nothingFound, setNothingFound] = useState<boolean>(false);
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const getAllUsers = trpc.user.getAllUsers.useMutation({
+    onSuccess: data => {
+      console.log(data);
+      setLoading(false);
+      if (data.code === 200) {
+        console.log(data.users);
+        data.users && setAllUsers(data.users);
+      }
+    }
+  })
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      getAllUsers.mutateAsync();
+    }
+    fetchUsers();
+  }, [])
 
   const getUsers = trpc.search.getResultByQuery.useMutation({
     onSuccess: (data) => {
@@ -66,7 +86,7 @@ const FindFriends: React.FC = () => {
 
   const addFriends = trpc.friends.addFriend.useMutation({
     onSuccess: (data) => {
-      console.log(data);
+      router.push('/message')
     },
   });
 
@@ -74,15 +94,19 @@ const FindFriends: React.FC = () => {
     e.preventDefault();
     setUsers((_prev) => []);
     setNothingFound((_prev) => false);
-    await getUsers.mutate({
+    getUsers.mutateAsync({
       query: searchQuery,
     });
   };
 
   const handlePersonalChat = async (email: string) => {
     // router.push(`/message?email=${email}`)
-    await addFriends.mutate({ email });
+    addFriends.mutateAsync({ email });
   };
+
+  if (loading) {
+    return <></>
+  }
 
   return (
     <div className="w-full">
@@ -125,6 +149,58 @@ const FindFriends: React.FC = () => {
           </button>
         </div>
       </form>
+
+      <div>
+        <div className="flow-root mx-auto mt-4 w-[30vw]">
+          <ul
+            role="list"
+            className="divide-y divide-gray-200 dark:divide-gray-700"
+          >
+            {
+              allUsers.map(user => {
+                return (
+                  <li key={user.id} className="py-3 sm:py-4 ">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        {user.image ? (
+                          <img
+                            className="w-8 h-8 rounded-full"
+                            src={
+                              user.image ||
+                              "/docs/images/people/profile-picture-1.jpg"
+                            }
+                            alt={user.username[0]}
+                          />
+                        ) : (
+                          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+                            {user.username[0]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 ms-4">
+                        <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                          {user.username}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                          {user.email}
+                        </p>
+                      </div>
+                      <div
+                        className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white"
+                        onClick={() => {
+                          handlePersonalChat(user.email);
+                        }}
+                      >
+                        <MailOutlineIcon className="hover:cursor-pointer" />
+                      </div>
+                    </div>
+                  </li>
+                )
+              })
+            }
+          </ul>
+        </div>
+      </div>
 
       {nothingFound && "nothing found"}
       {users.length > 0 && (
@@ -216,7 +292,7 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     const servers = async () => {
-      await getAllServers.mutate();
+      getAllServers.mutateAsync();
     };
     servers();
   }, [showPopup]);
@@ -311,7 +387,7 @@ const Popup = ({ onClose }: any) => {
             onClick={async (e) => {
               e.preventDefault();
               console.log('i was clicked');
-              await createServer.mutate({ serverName: serverName })
+              createServer.mutateAsync({ serverName: serverName })
             }}
           >
             Create
