@@ -1,16 +1,21 @@
 import { useSocket } from "@/context/SocketProvider";
 import { trpc } from "@/utils/trpc";
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 const Login: React.FC = () => {
   const router = useRouter();
 
-  if (typeof window !== "undefined") {
-    localStorage.getItem('token') && router.push('/'); 
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        router.push("/");
+      }
+    }
+  }, [router]);
 
   const { sendDataAfterLogin } = useSocket();
 
@@ -24,7 +29,7 @@ const Login: React.FC = () => {
       }
       if (data?.code === 404) {
         toast("User Not Found");
-      } 
+      }
       if (data?.code === 400) {
         toast("Password Incorrect");
       }

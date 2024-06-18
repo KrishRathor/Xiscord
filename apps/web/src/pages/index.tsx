@@ -19,9 +19,11 @@ const Home: React.FC = () => {
   const server = useRecoilValue(serverName);
   const router = useRouter();
 
-  if (typeof window !== "undefined") {
-    !localStorage.getItem('token') && router.push('/login');
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      !localStorage.getItem("token") && router.push("/login");
+    }
+  }, [router]);
 
   return (
     <div className="flex h-[100vh]" style={{ background: "#313338" }}>
@@ -57,20 +59,23 @@ const FindFriends: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const getAllUsers = trpc.user.getAllUsers.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       setLoading(false);
       if (data.code === 200) {
         data.users && setAllUsers(data.users);
       }
-    }
-  })
+    },
+  });
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      getAllUsers.mutateAsync();
+    const token = localStorage.getItem("token");
+    if (token) {
+      const fetchUsers = async () => {
+        getAllUsers.mutateAsync();
+      };
+      fetchUsers();
     }
-    fetchUsers();
-  }, [])
+  }, []);
 
   const getUsers = trpc.search.getResultByQuery.useMutation({
     onSuccess: (data) => {
@@ -84,7 +89,7 @@ const FindFriends: React.FC = () => {
 
   const addFriends = trpc.friends.addFriend.useMutation({
     onSuccess: (data) => {
-      router.push('/message')
+      router.push("/message");
     },
   });
 
@@ -103,7 +108,7 @@ const FindFriends: React.FC = () => {
   };
 
   if (loading) {
-    return <></>
+    return <></>;
   }
 
   return (
@@ -154,48 +159,46 @@ const FindFriends: React.FC = () => {
             role="list"
             className="divide-y divide-gray-200 dark:divide-gray-700"
           >
-            {
-              allUsers.map(user => {
-                return (
-                  <li key={user.id} className="py-3 sm:py-4 ">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        {user.image ? (
-                          <img
-                            className="w-8 h-8 rounded-full"
-                            src={
-                              user.image ||
-                              "/docs/images/people/profile-picture-1.jpg"
-                            }
-                            alt={user.username[0]}
-                          />
-                        ) : (
-                          <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
-                            {user.username[0]}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 ms-4">
-                        <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                          {user.username}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                          {user.email}
-                        </p>
-                      </div>
-                      <div
-                        className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white"
-                        onClick={() => {
-                          handlePersonalChat(user.email);
-                        }}
-                      >
-                        <MailOutlineIcon className="hover:cursor-pointer" />
-                      </div>
+            {allUsers.map((user) => {
+              return (
+                <li key={user.id} className="py-3 sm:py-4 ">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      {user.image ? (
+                        <img
+                          className="w-8 h-8 rounded-full"
+                          src={
+                            user.image ||
+                            "/docs/images/people/profile-picture-1.jpg"
+                          }
+                          alt={user.username[0]}
+                        />
+                      ) : (
+                        <span className="text-black rounded-full h-8 w-8 flex items-center justify-center bg-gray-300">
+                          {user.username[0]}
+                        </span>
+                      )}
                     </div>
-                  </li>
-                )
-              })
-            }
+                    <div className="flex-1 min-w-0 ms-4">
+                      <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                        {user.username}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                        {user.email}
+                      </p>
+                    </div>
+                    <div
+                      className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white"
+                      onClick={() => {
+                        handlePersonalChat(user.email);
+                      }}
+                    >
+                      <MailOutlineIcon className="hover:cursor-pointer" />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -288,10 +291,13 @@ const Sidebar: React.FC = () => {
   });
 
   useEffect(() => {
-    const servers = async () => {
-      getAllServers.mutateAsync();
-    };
-    servers();
+    const token = localStorage.getItem("token");
+    if (token) {
+      const servers = async () => {
+        getAllServers.mutateAsync();
+      };
+      servers();
+    }
   }, [showPopup]);
 
   const togglePopup = () => {
@@ -347,17 +353,16 @@ const Sidebar: React.FC = () => {
 export default Home;
 
 const Popup = ({ onClose }: any) => {
-
-  const [serverName, setServerName] = useState<string>('');
+  const [serverName, setServerName] = useState<string>("");
 
   const createServer = trpc.server.createServer.useMutation({
-    onSuccess: data => {
+    onSuccess: (data) => {
       toast(data?.message);
       if (data?.code === 201) {
         onClose();
       }
-    }
-  })
+    },
+  });
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -374,14 +379,14 @@ const Popup = ({ onClose }: any) => {
               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               placeholder="server_name"
               required
-              onChange={e => setServerName(_prev => e.target.value)}
+              onChange={(e) => setServerName((_prev) => e.target.value)}
             />
           </div>
           <button
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             onClick={async (e) => {
               e.preventDefault();
-              createServer.mutateAsync({ serverName: serverName })
+              createServer.mutateAsync({ serverName: serverName });
             }}
           >
             Create
